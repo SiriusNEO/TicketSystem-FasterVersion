@@ -3,6 +3,8 @@ project(TicketSystem_2021_main)
 
 set(CMAKE_CXX_STANDARD 14)
 
+add_definitions("-g -O2 -Wall")
+
 add_executable(TicketSystem_2021_main
                src/main.cpp src/cmdprocessor.hpp src/systemcore.hpp
                lib/mytools.hpp lib/hashtable.hpp lib/timetype.hpp
