@@ -5,6 +5,7 @@
 Sirius::System ticketSystem;
 
 int main() {
+    std::string cmd;
     while (getline(std::cin, cmd)) {
         auto res = ticketSystem.response(cmd);
         std::cout << res.second << '\n';
