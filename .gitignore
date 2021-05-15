@@ -1,4 +1,6 @@
 # Project exclude paths
+run.py/
+localJudge.py/
 cmake-build-debug/
 .idea/
 BigIntegerTest/
