@@ -1,0 +1,21 @@
+# Project exclude paths
+cmake-build-debug/
+.idea/
+BigIntegerTest/
+temp/
+testData/
+cmake_install.cmake/
+CMakeCache.txt
+stdin.txt
+test.py
+tmp.txt
+Makefile
+python_interpreter
+python_interpreter.cbp
+libantlr4-cpp-runtime.a
+readme.md
+CMakeFiles/
+code
+code.cbp
+#myData/
+myTest.py
