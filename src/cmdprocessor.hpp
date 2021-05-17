@@ -12,8 +12,8 @@
 namespace Sirius {
     constexpr int Argc_Max = 24, CmdTypeNum_Max = 16;
     constexpr int UserID_Max = 21, Password_Max = 31, Name_Max = 16, MailAddr_Max = 31, UserNum_Max = 122777; //Username = UserID
-    constexpr int TrainID_Max = 21, StationNum_Max = 100, StationName_Max = 31;
-    constexpr int Int_Max = 999999999;
+    constexpr int TrainID_Max = 21, StationNum_Max = 101, StationName_Max = 31;
+    constexpr int Int_Max = 0x7fffffff;
 
     typedef FixedStr<UserID_Max> uidType;
     typedef FixedStr<Password_Max> pwdType;
@@ -22,7 +22,7 @@ namespace Sirius {
     typedef FixedStr<TrainID_Max> tidType;
     typedef FixedStr<StationName_Max> staNameType;
 
-    const tidType TrainIDStr_Max = "zzzzzzzzzzzzzzzzzzzz";
+    const tidType TrainIDStr_Max = "~~~~~~~~~~~~~~~~~~~~";
 
     const std::string CMD[CmdTypeNum_Max] = {"add_user", "login", "logout", "query_profile", "modify_profile", "add_train",
                                             "release_train", "query_train", "delete_train", "query_ticket", "query_transfer",

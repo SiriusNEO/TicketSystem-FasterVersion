@@ -325,13 +325,11 @@ namespace Sirius {
                     for (int k = si.index + 1; k < trainS.first.stationNum; ++k)
                         for (int l = 0; l < ti.index; ++l) {
                             if (trainS.first.stations[k] == trainT.first.stations[l]) {
-                                TimeType fastestStartDay2 = ceil((startDay1 + trainS.first.arrivingTimes[k] - trainT.first.leavingTimes[l]) / (24.0*60)) * 24*60;
-                                /*
+                                TimeType fastestStartDay2;
                                 if (trainS.first.arrivingTimes[k].getClock() <= trainT.first.leavingTimes[l].getClock())
                                     fastestStartDay2 = (startDay1 + trainS.first.arrivingTimes[k]).getDate() - trainT.first.leavingTimes[l].getDate();
                                 else
                                     fastestStartDay2 = (startDay1 + trainS.first.arrivingTimes[k]).getDate() + 24*60 - trainT.first.leavingTimes[l].getDate();
-                                */
                                 //第一辆车发车时间，第二辆车最快发车时间（保证第二辆车 上车时间为第一辆车到达当天）
                                 if (ti.endSaleDate < fastestStartDay2) continue; //最快还是赶不上第二辆车卖完，不行
                                 TimeType startDay2 = std::max(fastestStartDay2, ti.startSaleDate); //如果能最快发车就最快，否则从第二辆车第一次发车就上车
