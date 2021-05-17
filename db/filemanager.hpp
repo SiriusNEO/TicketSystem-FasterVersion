@@ -5,17 +5,19 @@
 #ifndef TICKETSYSTEM_2021_MAIN_FILEMANAGER_HPP
 #define TICKETSYSTEM_2021_MAIN_FILEMANAGER_HPP
 
-#include "blocklist.h"
+#include "database_cached.hpp"
+#include <vector>
+#include <fstream>
 
 namespace Sirius {
     template <class keyType, class valueType> //均为定长类型
     class FileManager {
         public:
             int siz;
-            BlockList<keyType, 1024> dataStructure;
+            __Amagi::database_cached<keyType, int> dataStructure;
             std::fstream dataFile;
         public:
-            FileManager(const char* dataFileName) : dataStructure(("i"+std::string(dataFileName)).c_str()) {
+            FileManager(const char* dataFileName) : dataStructure("i"+std::string(dataFileName)) {
                 dataFile.open(dataFileName, std::ios::ate | std::ios::in | std::ios::out | std::ios::binary);
                 if (!dataFile) {
                     std::ofstream outFile(dataFileName);
@@ -47,28 +49,28 @@ namespace Sirius {
 
             bool del(const keyType& key) { //单点删除
                 --siz;
-                return dataStructure.del(key);
+                return dataStructure.erase(key);
             }
 
             bool modify(const keyType& key, valueType val) { //单点修改，返回是否修改成功
-                auto index = dataStructure.find(key);
-                if (!index.second) return false;
-                dataFile.seekp(index.first, std::ios::beg);
+                auto index = dataStructure.query(key);
+                if (!index.first) return false;
+                dataFile.seekp(index.second, std::ios::beg);
                 dataFile.write(reinterpret_cast<char *>(&val), sizeof(valueType));
                 return true;
             }
 
             std::pair<valueType, bool> find(const keyType& key) {
-                auto index = dataStructure.find(key);
+                auto index = dataStructure.query(key);
                 valueType tmp;
-                if (!index.second) return std::make_pair(tmp, false);
-                dataFile.seekg(index.first, std::ios::beg);
+                if (!index.first) return std::make_pair(tmp, false);
+                dataFile.seekg(index.second, std::ios::beg);
                 dataFile.read(reinterpret_cast<char *>(&tmp), sizeof(valueType));
                 return std::make_pair(tmp, true);
             }
 
             std::vector<valueType> rangeFind(const keyType& key1, const keyType& key2) {
-                auto index = dataStructure.rangeFind(key1, key2);
+                auto index = dataStructure.range(key1, key2);
                 std::vector<valueType> ret;
                 for (auto i : index) {
                     valueType tmp;
@@ -77,6 +79,10 @@ namespace Sirius {
                     ret.push_back(tmp);
                 }
                 return ret;
+            }
+
+            void clear() {
+                dataStructure.clear();
             }
     };
 }

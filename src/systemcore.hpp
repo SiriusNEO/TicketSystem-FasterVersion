@@ -453,15 +453,13 @@ namespace Sirius {
         }
 
         std::string clean(const cmdType& info) {
-            /*
-                loggedUser.clear();
-                userDatabase.clear();
-                trainDatabase.clear();
-                dayTrainDatabase.clear();
-                stationDatabase.clear();
-                orderDatabase.clear();
-                orderQueue.clear();
-            */
+            loggedUser.clear();
+            userDatabase.clear();
+            trainDatabase.clear();
+            dayTrainDatabase.clear();
+            stationDatabase.clear();
+            orderDatabase.clear();
+            orderQueue.clear();
             return "0";
         }
         std::string exit(const cmdType& info) {

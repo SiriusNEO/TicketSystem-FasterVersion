@@ -3,9 +3,19 @@ project(code)
 
 set(CMAKE_CXX_STANDARD 14)
 
-add_definitions("-g -O2 -Wall")
+include_directories(db)
+include_directories(lib)
+include_directories(src)
 
 add_executable(code
-               src/main.cpp src/cmdprocessor.hpp src/systemcore.hpp
-               lib/mytools.hpp lib/hashtable.hpp lib/timetype.hpp
-               db/blocklist.h db/filemanager.hpp )
+        db/bptree.h
+        db/cache.h
+        db/filemanager.hpp
+        db/LRUBPtree.h
+        lib/hashtable.hpp
+        lib/mytools.hpp
+        lib/timetype.hpp
+        src/cmdprocessor.hpp
+        src/main.cpp
+        src/systemcore.hpp
+        CMakeLists.txt)
