@@ -8,10 +8,10 @@ include_directories(lib)
 include_directories(src)
 
 add_executable(code
-        db/bptree.h
-        db/cache.h
+        db/database.hpp
+        db/database_cached.hpp
         db/filemanager.hpp
-        db/LRUBPtree.h
+        db/List.hpp
         lib/hashtable.hpp
         lib/mytools.hpp
         lib/timetype.hpp
