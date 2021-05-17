@@ -55,7 +55,7 @@ namespace Sirius {
         }
         int size(){return siz;}
     };
-
+    
     template<int SIZE, int MOD, int SEED>
     class HashTable {
     private:
