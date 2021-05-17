@@ -153,7 +153,7 @@ namespace Sirius {
             if (!targetUser.second) return "-1"; //-u 无此用户
             if (curUser.first.privilege <= targetUser.first.privilege && info.args['c'-'a'] != info.args['u'-'a']) return "-1";
             //-c权限小等于-u权限，且-c和-u不同
-            return info.args['u'-'a'] + " " + std::string(targetUser.first.name.str) + " " + std::string(targetUser.first.mailAddr.str) + " " + intToString(targetUser.first.privilege);
+            return info.args['u'-'a'] + " " + std::string(targetUser.first.name.str) + " " + std::string(targetUser.first.mailAddr.str) + " " + std::to_string(targetUser.first.privilege);
         }
 
         std::string modify_profile(const cmdType& info) {
@@ -172,7 +172,7 @@ namespace Sirius {
             auto oldPrivilege = (info.args['g'-'a'].empty()) ? targetUser.first.privilege : stringToInt(info.args['g'-'a']);
 
             userDatabase.modify(targetID, (User){oldPassword, oldName, oldMailAddr, oldPrivilege});
-            return info.args['u'-'a'] + " " + std::string(oldName.str) + " " + std::string(oldMailAddr.str) + " " + intToString(oldPrivilege);
+            return info.args['u'-'a'] + " " + std::string(oldName.str) + " " + std::string(oldMailAddr.str) + " " + std::to_string(oldPrivilege);
         }
 
         std::string add_train(const cmdType& info) {
@@ -241,16 +241,16 @@ namespace Sirius {
                 ret += std::string(targetTrain.first.stations[i].str) + " ";
                 if (i == 0) {
                     ret += "xx-xx xx:xx -> " + (day+targetTrain.first.leavingTimes[0]).toFormatString() + " 0 ";
-                    if (!targetTrain.first.isReleased) ret += intToString(targetTrain.first.totalSeatNum) + "\n";
-                    else ret += intToString(dayTrain.first.seatNum[0]) + "\n";
+                    if (!targetTrain.first.isReleased) ret += std::to_string(targetTrain.first.totalSeatNum) + "\n";
+                    else ret += std::to_string(dayTrain.first.seatNum[0]) + "\n";
                 }
                 else if (i == targetTrain.first.stationNum-1){
-                    ret += (day+targetTrain.first.arrivingTimes[i]).toFormatString() + " -> xx-xx xx:xx " + intToString(targetTrain.first.priceSum[i]) + " x";
+                    ret += (day+targetTrain.first.arrivingTimes[i]).toFormatString() + " -> xx-xx xx:xx " + std::to_string(targetTrain.first.priceSum[i]) + " x";
                 }
                 else {
-                   ret += (day+targetTrain.first.arrivingTimes[i]).toFormatString() + " -> " + (day+targetTrain.first.leavingTimes[i]).toFormatString() + " " + intToString(targetTrain.first.priceSum[i]) + " ";
-                   if (!targetTrain.first.isReleased) ret += intToString(targetTrain.first.totalSeatNum) + "\n";
-                   else ret += intToString(dayTrain.first.seatNum[i]) + "\n";
+                   ret += (day+targetTrain.first.arrivingTimes[i]).toFormatString() + " -> " + (day+targetTrain.first.leavingTimes[i]).toFormatString() + " " + std::to_string(targetTrain.first.priceSum[i]) + " ";
+                   if (!targetTrain.first.isReleased) ret += std::to_string(targetTrain.first.totalSeatNum) + "\n";
+                   else ret += std::to_string(dayTrain.first.seatNum[i]) + "\n";
                 }
             }
             return ret;
@@ -290,7 +290,7 @@ namespace Sirius {
             if (!ticketCnt) return "0";
             if (info.argNum == 4 && info.args['p'-'a'] == "cost") qsort(tickets, tickets+ticketCnt-1, costCmp);
             else qsort(tickets, tickets+ticketCnt-1, timeCmp);
-            std::string ret = intToString(ticketCnt);
+            std::string ret = std::to_string(ticketCnt);
             for (int i = 0; i < ticketCnt; ++i) {
                 auto train = trainDatabase.find(tickets[i].trainID);
                 TimeType startDay = day - train.first.leavingTimes[tickets[i].s].getDate();
@@ -298,8 +298,8 @@ namespace Sirius {
                 std::string from = train.first.stations[tickets[i].s].str, to = train.first.stations[tickets[i].t].str,
                             lea = (startDay + train.first.leavingTimes[tickets[i].s]).toFormatString(),
                             arr = (startDay + train.first.arrivingTimes[tickets[i].t]).toFormatString();
-                std::string seat = intToString(dayTrain.first.querySeat(tickets[i].s, tickets[i].t-1));
-                ret += "\n" + std::string(tickets[i].trainID.str) + " " + from + " " + lea + " -> " + to + " " + arr + " " + intToString(tickets[i].cost) + " " + seat;
+                std::string seat = std::to_string(dayTrain.first.querySeat(tickets[i].s, tickets[i].t-1));
+                ret += "\n" + std::string(tickets[i].trainID.str) + " " + from + " " + lea + " -> " + to + " " + arr + " " + std::to_string(tickets[i].cost) + " " + seat;
             }
             return ret;
         }
@@ -354,10 +354,10 @@ namespace Sirius {
                                     auto dayTrainT = dayTrainDatabase.find(std::make_pair(startDay2, trainT.first.trainID));
                                     ret += std::string(si.trainID.str) + " " + std::string(trainS.first.stations[si.index].str) + " " + (startDay1 + si.leavingTime).toFormatString()
                                            + " -> " + std::string(trainS.first.stations[k].str) + " " + (startDay1 + trainS.first.arrivingTimes[k]).toFormatString() + " " +
-                                           intToString(trainS.first.priceSum[k] - si.priceSum) + " " + intToString(dayTrainS.first.querySeat(si.index, k - 1)) + "\n";
+                                           std::to_string(trainS.first.priceSum[k] - si.priceSum) + " " + std::to_string(dayTrainS.first.querySeat(si.index, k - 1)) + "\n";
                                     ret += std::string(trainT.first.trainID.str) + " " + std::string(trainT.first.stations[l].str) + " " + (startDay2 + trainT.first.leavingTimes[l]).toFormatString()
                                            + " -> " + std::string(trainT.first.stations[ti.index].str) + " " + (startDay2 + ti.arrivingTime).toFormatString() + " " +
-                                           intToString(ti.priceSum - trainT.first.priceSum[l]) + " " + intToString(dayTrainT.first.querySeat(l, ti.index - 1));
+                                           std::to_string(ti.priceSum - trainT.first.priceSum[l]) + " " + std::to_string(dayTrainT.first.querySeat(l, ti.index - 1));
                                 }
                             }
                         }
@@ -393,7 +393,7 @@ namespace Sirius {
                 dayTrainDatabase.modify(std::make_pair(startDay, id), dayTrain.first);
                 order.status = SUCCESS;
                 orderDatabase.insert(std::make_pair(uid, oid), order);
-                long long ret = price*buyNum;
+                long long ret = (long long)price*buyNum;
                 return std::to_string(ret);
             }
             order.status = PENDING;
@@ -410,7 +410,7 @@ namespace Sirius {
             auto orders = orderDatabase.rangeFind(std::make_pair(uid, 0), std::make_pair(uid, Int_Max));
             if (orders.empty()) return "0";
             int orderCnt = 0;
-            ret += intToString(orders.size()) + "\n";
+            ret += std::to_string(orders.size()) + "\n";
             for (auto it = orders.rbegin(); it != orders.rend(); it++) {
                 switch (it->status) {
                     case SUCCESS:ret += "[success] ";break;
@@ -418,7 +418,7 @@ namespace Sirius {
                     case REFUNDED:ret += "[refunded] ";
                 }
                 ret += std::string(it->trainID.str) + " " + std::string(it->from.str) + " " + (it->startDay+it->leavingTime).toFormatString() + " -> "
-                        + std::string(it->to.str) + " " + (it->startDay+it->arrivingTime).toFormatString() + " " + intToString(it->price) + " " + intToString(it->num);
+                        + std::string(it->to.str) + " " + (it->startDay+it->arrivingTime).toFormatString() + " " + std::to_string(it->price) + " " + std::to_string(it->num);
                 ++orderCnt;
                 if (orderCnt != orders.size()) ret += "\n";
             }

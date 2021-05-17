@@ -51,12 +51,6 @@ namespace Sirius {
     };
 
     /* Processor */
-    std::string intToString(int num) {
-        std::stringstream ss;
-        ss << num;
-        return ss.str();
-    }
-
     int stringToInt(const std::string& str) {
         int ret = 0;
         for (auto ch : str) ret = ret * 10 + ch - '0';
@@ -64,22 +58,8 @@ namespace Sirius {
     }
 
     std::string dateFormat(int num) {
-        if (num < 10) return "0"+intToString(num);
-        return intToString(num);
-    }
-
-    double stringToDouble(const std::string& str) {
-        double ret = 0, floatBase = 0.1;
-        int i = 0;
-        for (; i < str.size() && str[i] != '.'; ++i) ret = ret * 10 + str[i] - '0';
-        for (++i; i < str.size(); ++i) ret += (str[i] - '0')*floatBase, floatBase *= 0.1;
-        return ret;
-    }
-
-    std::string doubleToString(double num) {
-        std::stringstream ss;
-        ss << num;
-        return ss.str();
+        if (num < 10) return "0"+std::to_string(num);
+        return std::to_string(num);
     }
 
     void split(const std::string& originStr, std::string ret[], int& retc, char delim) {
