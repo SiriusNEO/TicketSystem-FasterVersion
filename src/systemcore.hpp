@@ -282,7 +282,7 @@ namespace Sirius {
                 else if (si->trainID > ti->trainID) ti++;
                 else {
                     TimeType startDay = day - si->leavingTime.getDate(); //要在day这一天上车，对应的发站时间
-                    if (si->startSaleDate <= startDay && startDay <= ti->endSaleDate && si->leavingTime < ti->arrivingTime && si->index < ti->index)
+                    if (si->startSaleDate <= startDay && startDay <= si->endSaleDate && si->leavingTime < ti->arrivingTime && si->index < ti->index)
                         //售卖时间范围内每天都有车.同一辆车，arr和lea可以直接比. 比两个更鲁棒
                         tickets[ticketCnt++] = Ticket(si->trainID, si->index,ti->index, ti->arrivingTime-si->leavingTime, ti->priceSum-si->priceSum);
                     si++, ti++;
