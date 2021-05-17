@@ -82,6 +82,7 @@ namespace Sirius {
             }
 
             void clear() {
+                siz = 0;
                 dataStructure.clear();
             }
     };

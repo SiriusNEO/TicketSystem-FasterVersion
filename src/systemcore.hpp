@@ -114,14 +114,16 @@ namespace Sirius {
         std::string add_user(const cmdType& info) {
             if (info.argNum != 6) return "-1";
             uidType curUserID = info.args['c'-'a'], targetUserID = info.args['u'-'a'];
-            if (userDatabase.size()) {
-                if (!loggedUser.find(curUserID)) return "-1";
+            if (userDatabase.size()) { //非第一次添加用户
+                if (!loggedUser.find(curUserID)) return "-1"; //-c未登录
                 auto curUser = userDatabase.find(curUserID);
-                if (curUser.first.privilege <= stringToInt(info.args['g'-'a'])) return "-1";
-                if (userDatabase.find(targetUserID).second) return "-1";
-                userDatabase.insert(targetUserID, (User){info.args['p'-'a'], info.args['n'-'a'], info.args['m'-'a'], stringToInt(info.args['g'-'a'])});
+                int g = stringToInt(info.args['g'-'a']);
+                if (curUser.first.privilege <= g) return "-1"; //-g权限大等于-c
+                if (userDatabase.find(targetUserID).second) return "-1"; //id已有
+                userDatabase.insert(targetUserID, (User){info.args['p'-'a'], info.args['n'-'a'], info.args['m'-'a'], g});
                 return "0";
             }
+            //创建第一个用户，直接插入，权限为10
             userDatabase.insert(targetUserID, (User){info.args['p'-'a'], info.args['n'-'a'], info.args['m'-'a'], 10});
             return "0";
         }
@@ -129,15 +131,15 @@ namespace Sirius {
         std::string login(const cmdType& info) {
             if (info.argNum != 2) return "-1";
             auto targetUser = userDatabase.find(info.args['u'-'a']);
-            if (!targetUser.second || loggedUser.find(info.args['u'-'a'])) return "-1";
-            if (targetUser.first.password != FixedStr<Password_Max>(info.args['p'-'a'])) return "-1";
+            if (!targetUser.second || loggedUser.find(info.args['u'-'a'])) return "-1"; //无此用户、重复登陆
+            if (targetUser.first.password != FixedStr<Password_Max>(info.args['p'-'a'])) return "-1"; //密码错误
             loggedUser.insert(info.args['u'-'a']);
             return "0";
         }
 
         std::string logout(const cmdType& info) {
             if (info.argNum != 1) return "-1";
-            if (!loggedUser.find(info.args['u'-'a'])) return "-1";
+            if (!loggedUser.find(info.args['u'-'a'])) return "-1"; //未登录
             loggedUser.del(info.args['u'-'a']);
             return "0";
         }
@@ -145,22 +147,22 @@ namespace Sirius {
         std::string query_profile(const cmdType& info) {
             if (info.argNum != 2) return "-1";
             uidType curUserID = info.args['c'-'a'];
-            if (!loggedUser.find(curUserID)) return "-1";
+            if (!loggedUser.find(curUserID)) return "-1"; //-c未登录
             auto curUser = userDatabase.find(curUserID);
             auto targetUser = userDatabase.find(info.args['u'-'a']);
-            if (!targetUser.second) return "-1";
+            if (!targetUser.second) return "-1"; //-u 无此用户
             if (curUser.first.privilege <= targetUser.first.privilege && info.args['c'-'a'] != info.args['u'-'a']) return "-1";
-
+            //-c权限小等于-u权限，且-c和-u不同
             return info.args['u'-'a'] + " " + std::string(targetUser.first.name.str) + " " + std::string(targetUser.first.mailAddr.str) + " " + intToString(targetUser.first.privilege);
         }
 
         std::string modify_profile(const cmdType& info) {
             if (info.argNum < 2 || info.argNum > 6) return "-1";
-            if (!loggedUser.find(info.args['c'-'a'])) return "-1";
+            if (!loggedUser.find(info.args['c'-'a'])) return "-1"; //-c 未登录
             auto curUser = userDatabase.find(info.args['c'-'a']);
             uidType targetID = info.args['u'-'a'];
             auto targetUser = userDatabase.find(targetID);
-            if (!targetUser.second) return "-1";
+            if (!targetUser.second) return "-1"; //-u 无此用户
             if (curUser.first.privilege <= targetUser.first.privilege && info.args['c'-'a'] != info.args['u'-'a']) return "-1"; //权限大于或是同名，取反变成与
             if (stringToInt(info.args['g'-'a']) >= curUser.first.privilege) return "-1"; //-g 低于 -c
 
@@ -176,7 +178,7 @@ namespace Sirius {
         std::string add_train(const cmdType& info) {
             if (info.argNum != 10) return "-1";
             tidType id = info.args['i'-'a'];
-            if (trainDatabase.find(id).second) return "-1";
+            if (trainDatabase.find(id).second) return "-1"; //tid已有
 
             Train newTrain = (Train){id, stringToInt(info.args['n'-'a'])};
             newTrain.totalSeatNum = stringToInt(info.args['m'-'a']);
@@ -189,15 +191,15 @@ namespace Sirius {
                 newTrain.priceSum[i] = stringToInt(tempStorage1[i-1]) + newTrain.priceSum[i-1];
 
             newTrain.startTime = "01-01 " + info.args['x'-'a'];
-            split(info.args['o'-'a'], tempStorage2, tempStorageNum, '|');
-            split(info.args['t'-'a'], tempStorage1, tempStorageNum, '|');
+            split(info.args['o'-'a'], tempStorage2, tempStorageNum, '|'); //stopoverTime
+            split(info.args['t'-'a'], tempStorage1, tempStorageNum, '|'); //travelTime
             for (int i = 0; i < newTrain.stationNum; ++i) {
                 if (i > 0) newTrain.arrivingTimes[i] = newTrain.leavingTimes[i-1] + stringToInt(tempStorage1[i-1]);
                 if (i < newTrain.stationNum-1) {
-                    if (i > 0) newTrain.leavingTimes[i] = newTrain.arrivingTimes[i] + stringToInt(tempStorage2[i-1]);
+                    if (i > 0) newTrain.leavingTimes[i] = newTrain.arrivingTimes[i] + stringToInt(tempStorage2[i-1]); //只有两站，不会管
                     else newTrain.leavingTimes[0] = newTrain.startTime;
                 }
-                else newTrain.leavingTimes[i] = Int_Max;
+                else newTrain.leavingTimes[i] = Int_Max; //终点站leavingTime无穷
             }
             split(info.args['d'-'a'], tempStorage1, tempStorageNum, '|');
             newTrain.startSaleDate = tempStorage1[0] + " 00:00", newTrain.endSaleDate = tempStorage1[1] + " 00:00";
@@ -210,7 +212,7 @@ namespace Sirius {
             if (info.argNum != 1) return "-1";
             tidType id = info.args['i'-'a'];
             auto targetTrain = trainDatabase.find(id);
-            if (!targetTrain.second || targetTrain.first.isReleased) return "-1";
+            if (!targetTrain.second || targetTrain.first.isReleased) return "-1"; //找不到或已released
             for (auto i = targetTrain.first.startSaleDate; i <= targetTrain.first.endSaleDate; i += 24*60) {
                 DayTrain dayTrain{};
                 for (int j = 0; j < targetTrain.first.stationNum; ++j) dayTrain.seatNum[j] = targetTrain.first.totalSeatNum;
@@ -231,8 +233,8 @@ namespace Sirius {
             auto targetTrain = trainDatabase.find(id);
             TimeType day(info.args['d'-'a'] + " 00:00");
 
-            if (!targetTrain.second) return "-1";
-            if (!(targetTrain.first.startSaleDate <= day && day <= targetTrain.first.endSaleDate)) return "-1";
+            if (!targetTrain.second) return "-1"; //无此车
+            if (!(targetTrain.first.startSaleDate <= day && day <= targetTrain.first.endSaleDate)) return "-1"; //这里的day是发车时间
             auto dayTrain = dayTrainDatabase.find(std::make_pair(day, id));
             std::string ret = std::string(targetTrain.first.trainID.str) + " " + targetTrain.first.type + "\n";
             for (int i = 0; i < targetTrain.first.stationNum; ++i) {
@@ -258,7 +260,7 @@ namespace Sirius {
             if (info.argNum != 1) return "-1";
             tidType id = info.args['i'-'a'];
             auto targetTrain = trainDatabase.find(id);
-            if (!targetTrain.second || targetTrain.first.isReleased) return "-1";
+            if (!targetTrain.second || targetTrain.first.isReleased) return "-1"; //无此车或已发行
             trainDatabase.del(id);
             return "0";
         }
@@ -267,9 +269,10 @@ namespace Sirius {
             if (info.argNum < 3 || info.argNum > 4) return "-1";
             TimeType day = info.args['d'-'a'] + " 00:00";
             staNameType s = info.args['s'-'a'], t = info.args['t'-'a'];
+            if (s == t) return "0"; //起终相同，直接判掉
             auto sList = stationDatabase.rangeFind(std::make_pair(s, ""), std::make_pair(s, TrainIDStr_Max));
             auto tList = stationDatabase.rangeFind(std::make_pair(t, ""), std::make_pair(t, TrainIDStr_Max));
-            if (sList.empty() || tList.empty()) return "0";
+            if (sList.empty() || tList.empty()) return "0"; //无票
             auto si = sList.begin(), ti = tList.begin();
             Ticket tickets[trainDatabase.size()+2];
             int ticketCnt = 0;
@@ -305,6 +308,7 @@ namespace Sirius {
             if (info.argNum < 3 || info.argNum > 4) return "-1";
             TimeType day = info.args['d'-'a'] + " 00:00";
             staNameType s = info.args['s'-'a'], t = info.args['t'-'a'];
+            if (s == t) return "0";
             auto sList = stationDatabase.rangeFind(std::make_pair(s, ""), std::make_pair(s, TrainIDStr_Max));
             auto tList = stationDatabase.rangeFind(std::make_pair(t, ""), std::make_pair(t, TrainIDStr_Max));
             if (sList.empty() || tList.empty()) return "0";
@@ -321,11 +325,13 @@ namespace Sirius {
                     for (int k = si.index + 1; k < trainS.first.stationNum; ++k)
                         for (int l = 0; l < ti.index; ++l) {
                             if (trainS.first.stations[k] == trainT.first.stations[l]) {
-                                TimeType fastestStartDay2;
+                                TimeType fastestStartDay2 = ceil((startDay1 + trainS.first.arrivingTimes[k] - trainT.first.leavingTimes[l]) / (24.0*60)) * 24*60;
+                                /*
                                 if (trainS.first.arrivingTimes[k].getClock() <= trainT.first.leavingTimes[l].getClock())
                                     fastestStartDay2 = (startDay1 + trainS.first.arrivingTimes[k]).getDate() - trainT.first.leavingTimes[l].getDate();
                                 else
                                     fastestStartDay2 = (startDay1 + trainS.first.arrivingTimes[k]).getDate() + 24*60 - trainT.first.leavingTimes[l].getDate();
+                                */
                                 //第一辆车发车时间，第二辆车最快发车时间（保证第二辆车 上车时间为第一辆车到达当天）
                                 if (ti.endSaleDate < fastestStartDay2) continue; //最快还是赶不上第二辆车卖完，不行
                                 TimeType startDay2 = std::max(fastestStartDay2, ti.startSaleDate); //如果能最快发车就最快，否则从第二辆车第一次发车就上车
@@ -365,12 +371,12 @@ namespace Sirius {
         std::string buy_ticket(const cmdType& info) {
             if (info.argNum < 6 || info.argNum > 7) return "-1";
             uidType uid = info.args['u'-'a'];
-            if (!loggedUser.find(uid)) return "-1";
+            if (!loggedUser.find(uid)) return "-1"; //未登录
             TimeType day = info.args['d'-'a'] + " 00:00";
             tidType id = info.args['i'-'a'];
             auto train = trainDatabase.find(id);
             int buyNum = stringToInt(info.args['n'-'a']);
-            if (!train.first.isReleased || buyNum > train.first.totalSeatNum) return "-1";
+            if (!train.second || !train.first.isReleased || buyNum > train.first.totalSeatNum) return "-1";
             int f = -1, t = -1;
             for (int i = 0; i < train.first.stationNum && (f == -1 || t == -1); ++i) {
                 if (train.first.stations[i] == info.args['f'-'a']) f = i;
