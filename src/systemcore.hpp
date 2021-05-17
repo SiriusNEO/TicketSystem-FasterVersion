@@ -393,7 +393,8 @@ namespace Sirius {
                 dayTrainDatabase.modify(std::make_pair(startDay, id), dayTrain.first);
                 order.status = SUCCESS;
                 orderDatabase.insert(std::make_pair(uid, oid), order);
-                return intToString(price*buyNum);
+                long long ret = price*buyNum;
+                return std::to_string(ret);
             }
             order.status = PENDING;
             orderDatabase.insert(std::make_pair(uid, oid), order);
