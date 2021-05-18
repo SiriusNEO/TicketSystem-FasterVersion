@@ -12,5 +12,4 @@ int main() {
         if (!res.first) break;
         cmd.clear();
     }
-    return 0;
 }

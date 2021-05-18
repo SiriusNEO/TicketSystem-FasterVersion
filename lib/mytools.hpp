@@ -36,9 +36,7 @@ namespace Sirius {
             return strcmp(str, obj.str) < 0;
         }
         bool operator == (const FixedStr<SIZE>& obj) const {
-            for (int i = 0; i < SIZE; ++i)
-                if (str[i] != obj.str[i]) return false;
-            return true;
+            return strcmp(str, obj.str) == 0;
         }
         bool operator <= (const FixedStr<SIZE>& obj) const {return *this < obj || *this == obj;}
         bool operator > (const FixedStr<SIZE>& obj) const {return !(*this <= obj);}

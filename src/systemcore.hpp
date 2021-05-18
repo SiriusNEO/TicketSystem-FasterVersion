@@ -322,7 +322,6 @@ namespace Sirius {
                 for (auto ti : tList) {
                     if (ti.trainID == si.trainID) continue;
                     auto trainT = trainDatabase.find(ti.trainID);
-                    if (ti.endSaleDate < day) continue; //出发后第二车就已经无票
                     for (int k = si.index + 1; k < trainS.first.stationNum; ++k) //优化
                         for (int l = 0; l < ti.index; ++l) {
                             if (trainS.first.stations[k] == trainT.first.stations[l]) {
@@ -379,7 +378,7 @@ namespace Sirius {
             int f = -1, t = -1;
             for (int i = 0; i < train.first.stationNum && (f == -1 || t == -1); ++i) {
                 if (train.first.stations[i] == info.args['f'-'a']) f = i;
-                else if (train.first.stations[i] == info.args['t'-'a']) t = i;
+                if (train.first.stations[i] == info.args['t'-'a']) t = i;
             }
             if (f == -1 || t == -1 || f >= t) return "-1";
             TimeType startDay = day - train.first.leavingTimes[f].getDate();
