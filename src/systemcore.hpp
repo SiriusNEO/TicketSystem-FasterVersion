@@ -7,7 +7,6 @@
 
 #include "cmdprocessor.hpp"
 #include "../db/filemanager.hpp"
-#include <map>
 
 namespace Sirius {
     constexpr int HashSeed = 131;
@@ -25,8 +24,7 @@ namespace Sirius {
         int privilege;
     };
     FileManager<uidType, User> userDatabase; //uid -> user
-    //Sirius::HashTable<UserID_Max, UserNum_Max, HashSeed> loggedUser; //a set based on HashTable
-    std::map<uidType, bool> loggedUser;
+    Sirius::HashTable<UserID_Max, UserNum_Max, HashSeed> loggedUser; //a set based on HashTable
 
     /* Train
      * 0 -> 1 -> 2 -> 3 -> ... -> n
@@ -116,7 +114,7 @@ namespace Sirius {
             if (info.argNum != 6) return "-1";
             uidType curUserID = info.args['c'-'a'], targetUserID = info.args['u'-'a'];
             if (userDatabase.size()) { //非第一次添加用户
-                if (!loggedUser[curUserID]) return "-1"; //-c未登录
+                if (!loggedUser.find(curUserID)) return "-1"; //-c未登录
                 auto curUser = userDatabase.find(curUserID);
                 int g = stringToInt(info.args['g'-'a']);
                 if (curUser.first.privilege <= g) return "-1"; //-g权限大等于-c
@@ -132,23 +130,23 @@ namespace Sirius {
         std::string login(const cmdType& info) {
             if (info.argNum != 2) return "-1";
             auto targetUser = userDatabase.find(info.args['u'-'a']);
-            if (!targetUser.second || loggedUser[info.args['u'-'a']]) return "-1"; //无此用户、重复登陆
+            if (!targetUser.second || loggedUser.find(info.args['u'-'a'])) return "-1"; //无此用户、重复登陆
             if (targetUser.first.password != FixedStr<Password_Max>(info.args['p'-'a'])) return "-1"; //密码错误
-            loggedUser[info.args['u'-'a']] = true;
+            loggedUser.insert(info.args['u'-'a']);
             return "0";
         }
 
         std::string logout(const cmdType& info) {
             if (info.argNum != 1) return "-1";
-            if (!loggedUser[info.args['u'-'a']]) return "-1"; //未登录
-            loggedUser[info.args['u'-'a']] = false;
+            if (!loggedUser.find(info.args['u'-'a'])) return "-1"; //未登录
+            loggedUser.del(info.args['u'-'a']);
             return "0";
         }
 
         std::string query_profile(const cmdType& info) {
             if (info.argNum != 2) return "-1";
             uidType curUserID = info.args['c'-'a'];
-            if (!loggedUser[curUserID]) return "-1"; //-c未登录
+            if (!loggedUser.find(curUserID)) return "-1"; //-c未登录
             auto curUser = userDatabase.find(curUserID);
             auto targetUser = userDatabase.find(info.args['u'-'a']);
             if (!targetUser.second) return "-1"; //-u 无此用户
@@ -159,7 +157,7 @@ namespace Sirius {
 
         std::string modify_profile(const cmdType& info) {
             if (info.argNum < 2 || info.argNum > 6) return "-1";
-            if (!loggedUser[info.args['c'-'a']]) return "-1"; //-c 未登录
+            if (!loggedUser.find(info.args['c'-'a'])) return "-1"; //-c 未登录
             auto curUser = userDatabase.find(info.args['c'-'a']);
             uidType targetID = info.args['u'-'a'];
             auto targetUser = userDatabase.find(targetID);
@@ -369,7 +367,7 @@ namespace Sirius {
         std::string buy_ticket(const cmdType& info) {
             if (info.argNum < 6 || info.argNum > 7) return "-1";
             uidType uid = info.args['u'-'a'];
-            if (!loggedUser[uid]) return "-1"; //未登录
+            if (!loggedUser.find(uid)) return "-1"; //未登录
             TimeType day = info.args['d'-'a'] + " 00:00";
             tidType id = info.args['i'-'a'];
             auto train = trainDatabase.find(id);
@@ -406,12 +404,12 @@ namespace Sirius {
             if (info.argNum != 1) return "-1";
             std::string ret;
             uidType uid = info.args['u'-'a'];
-            if (!loggedUser[uid]) return "-1";
+            if (!loggedUser.find(uid)) return "-1";
             auto orders = orderDatabase.rangeFind(std::make_pair(uid, 0), std::make_pair(uid, Int_Max));
             if (orders.empty()) return "0";
-            int orderCnt = 0;
-            ret += std::to_string(orders.size()) + "\n";
+            ret += std::to_string(orders.size());
             for (auto it = orders.rbegin(); it != orders.rend(); it++) {
+                ret += "\n";
                 switch (it->status) {
                     case SUCCESS:ret += "[success] ";break;
                     case PENDING:ret += "[pending] ";break;
@@ -419,8 +417,6 @@ namespace Sirius {
                 }
                 ret += std::string(it->trainID.str) + " " + std::string(it->from.str) + " " + (it->startDay+it->leavingTime).toFormatString() + " -> "
                         + std::string(it->to.str) + " " + (it->startDay+it->arrivingTime).toFormatString() + " " + std::to_string(it->price) + " " + std::to_string(it->num);
-                ++orderCnt;
-                if (orderCnt != orders.size()) ret += "\n";
             }
             return ret;
         }
@@ -428,7 +424,7 @@ namespace Sirius {
         std::string refund_ticket(const cmdType& info) {
             if (info.argNum < 1 || info.argNum > 2) return "-1";
             auto uid = info.args['u'-'a'];
-            if (!loggedUser[uid]) return "-1";
+            if (!loggedUser.find(uid)) return "-1";
             auto orders = orderDatabase.rangeFind(std::make_pair(uid, 0), std::make_pair(uid, Int_Max));
             int n = (info.args['n'-'a'].empty()) ? 1 : stringToInt(info.args['n'-'a']);
             if (n > orders.size()) return "-1";
