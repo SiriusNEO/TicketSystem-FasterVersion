@@ -6,8 +6,8 @@
 #define TICKETSYSTEM_2021_MAIN_CMDPROCESSOR_HPP
 
 #include "../lib/mytools.hpp"
-#include "../lib/hashtable.hpp"
 #include "../lib/timetype.hpp"
+#include "../lib/bst.hpp"
 
 namespace Sirius {
     constexpr int Argc_Max = 24, CmdTypeNum_Max = 16;

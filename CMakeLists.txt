@@ -20,4 +20,4 @@ add_executable(code
         src/cmdprocessor.hpp
         src/main.cpp
         src/systemcore.hpp
-        CMakeLists.txt)
+        CMakeLists.txt lib/bst.hpp)

@@ -8,7 +8,8 @@ int main() {
     std::string cmd;
     while (getline(std::cin, cmd)) {
         auto res = ticketSystem.response(cmd);
-        for (auto ch : res.second) putchar(ch);putchar('\n');
+        for (auto ch : res.second) putchar(ch);
+        putchar('\n');
         if (!res.first) break;
         cmd.clear();
     }

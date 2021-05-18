@@ -24,7 +24,7 @@ namespace Sirius {
         int privilege;
     };
     FileManager<uidType, User> userDatabase; //uid -> user
-    Sirius::HashTable<UserID_Max, UserNum_Max, HashSeed> loggedUser; //a set based on HashTable
+    Sirius::BinarySearchTree<uidType> loggedUser;
 
     /* Train
      * 0 -> 1 -> 2 -> 3 -> ... -> n
@@ -112,65 +112,68 @@ namespace Sirius {
 
         std::string add_user(const cmdType& info) {
             if (info.argNum != 6) return "-1";
-            uidType curUserID = info.args['c'-'a'], targetUserID = info.args['u'-'a'];
+            uidType uid = info.args['u'-'a'];
             if (userDatabase.size()) { //非第一次添加用户
-                if (!loggedUser.find(curUserID)) return "-1"; //-c未登录
-                auto curUser = userDatabase.find(curUserID);
+                int curUserPriv = loggedUser.find(info.args['c'-'a']);
+                if (curUserPriv == -1) return "-1"; //-c未登录
                 int g = stringToInt(info.args['g'-'a']);
-                if (curUser.first.privilege <= g) return "-1"; //-g权限大等于-c
-                if (userDatabase.find(targetUserID).second) return "-1"; //id已有
-                userDatabase.insert(targetUserID, (User){info.args['p'-'a'], info.args['n'-'a'], info.args['m'-'a'], g});
+                if (curUserPriv <= g) return "-1"; //-g权限大等于-c
+                if (userDatabase.find(uid).second) return "-1"; //id已有
+                userDatabase.insert(uid, (User){info.args['p'-'a'], info.args['n'-'a'], info.args['m'-'a'], g});
                 return "0";
             }
             //创建第一个用户，直接插入，权限为10
-            userDatabase.insert(targetUserID, (User){info.args['p'-'a'], info.args['n'-'a'], info.args['m'-'a'], 10});
+            userDatabase.insert(uid, (User){info.args['p'-'a'], info.args['n'-'a'], info.args['m'-'a'], 10});
             return "0";
         }
 
         std::string login(const cmdType& info) {
             if (info.argNum != 2) return "-1";
-            auto targetUser = userDatabase.find(info.args['u'-'a']);
-            if (!targetUser.second || loggedUser.find(info.args['u'-'a'])) return "-1"; //无此用户、重复登陆
-            if (targetUser.first.password != FixedStr<Password_Max>(info.args['p'-'a'])) return "-1"; //密码错误
-            loggedUser.insert(info.args['u'-'a']);
+            uidType uid(info.args['u'-'a']);
+            auto targetUser = userDatabase.find(uid);
+            if (!targetUser.second || loggedUser.find(uid) != -1) return "-1"; //无此用户、重复登陆
+            if (targetUser.first.password != pwdType(info.args['p'-'a'])) return "-1"; //密码错误
+            loggedUser.insert(uid, targetUser.first.privilege);
             return "0";
         }
 
         std::string logout(const cmdType& info) {
             if (info.argNum != 1) return "-1";
-            if (!loggedUser.find(info.args['u'-'a'])) return "-1"; //未登录
-            loggedUser.del(info.args['u'-'a']);
+            uidType uid(info.args['u'-'a']);
+            if (loggedUser.find(uid) == -1) return "-1"; //未登录
+            loggedUser.del(uid);
             return "0";
         }
 
         std::string query_profile(const cmdType& info) {
             if (info.argNum != 2) return "-1";
-            uidType curUserID = info.args['c'-'a'];
-            if (!loggedUser.find(curUserID)) return "-1"; //-c未登录
-            auto curUser = userDatabase.find(curUserID);
+            int curUserPriv = loggedUser.find(info.args['c'-'a']);
+            if (curUserPriv == -1) return "-1"; //-c未登录
             auto targetUser = userDatabase.find(info.args['u'-'a']);
             if (!targetUser.second) return "-1"; //-u 无此用户
-            if (curUser.first.privilege <= targetUser.first.privilege && info.args['c'-'a'] != info.args['u'-'a']) return "-1";
+            if (curUserPriv <= targetUser.first.privilege && info.args['c'-'a'] != info.args['u'-'a']) return "-1";
             //-c权限小等于-u权限，且-c和-u不同
             return info.args['u'-'a'] + " " + std::string(targetUser.first.name.str) + " " + std::string(targetUser.first.mailAddr.str) + " " + std::to_string(targetUser.first.privilege);
         }
 
         std::string modify_profile(const cmdType& info) {
             if (info.argNum < 2 || info.argNum > 6) return "-1";
-            if (!loggedUser.find(info.args['c'-'a'])) return "-1"; //-c 未登录
-            auto curUser = userDatabase.find(info.args['c'-'a']);
-            uidType targetID = info.args['u'-'a'];
-            auto targetUser = userDatabase.find(targetID);
+            int curUserPriv = loggedUser.find(info.args['c'-'a']);
+            if (curUserPriv == -1) return "-1"; //-c 未登录
+            uidType uid = info.args['u'-'a'];
+            auto targetUser = userDatabase.find(uid);
             if (!targetUser.second) return "-1"; //-u 无此用户
-            if (curUser.first.privilege <= targetUser.first.privilege && info.args['c'-'a'] != info.args['u'-'a']) return "-1"; //权限大于或是同名，取反变成与
-            if (stringToInt(info.args['g'-'a']) >= curUser.first.privilege) return "-1"; //-g 低于 -c
+            if (curUserPriv <= targetUser.first.privilege && info.args['c'-'a'] != info.args['u'-'a']) return "-1"; //权限大等于或是同名，取反变成与
+            if (stringToInt(info.args['g'-'a']) >= curUserPriv) return "-1"; //-g 低于 -c
 
             auto oldPassword = (info.args['p'-'a'].empty()) ? targetUser.first.password : info.args['p'-'a'];
             auto oldName = (info.args['n'-'a'].empty()) ? targetUser.first.name : info.args['n'-'a'];
             auto oldMailAddr = (info.args['m'-'a'].empty()) ? targetUser.first.mailAddr : info.args['m'-'a'];
             auto oldPrivilege = (info.args['g'-'a'].empty()) ? targetUser.first.privilege : stringToInt(info.args['g'-'a']);
-
-            userDatabase.modify(targetID, (User){oldPassword, oldName, oldMailAddr, oldPrivilege});
+            
+            if (!info.args['g'-'a'].empty() && loggedUser.find(uid) != -1) loggedUser.insert(uid, oldPrivilege); //修改权限
+            
+            userDatabase.modify(uid, (User){oldPassword, oldName, oldMailAddr, oldPrivilege});
             return info.args['u'-'a'] + " " + std::string(oldName.str) + " " + std::string(oldMailAddr.str) + " " + std::to_string(oldPrivilege);
         }
 
@@ -367,7 +370,7 @@ namespace Sirius {
         std::string buy_ticket(const cmdType& info) {
             if (info.argNum < 6 || info.argNum > 7) return "-1";
             uidType uid = info.args['u'-'a'];
-            if (!loggedUser.find(uid)) return "-1"; //未登录
+            if (loggedUser.find(uid) == -1) return "-1"; //未登录
             TimeType day = info.args['d'-'a'] + " 00:00";
             tidType id = info.args['i'-'a'];
             auto train = trainDatabase.find(id);
@@ -404,7 +407,7 @@ namespace Sirius {
             if (info.argNum != 1) return "-1";
             std::string ret;
             uidType uid = info.args['u'-'a'];
-            if (!loggedUser.find(uid)) return "-1";
+            if (loggedUser.find(uid) == -1) return "-1";
             auto orders = orderDatabase.rangeFind(std::make_pair(uid, 0), std::make_pair(uid, Int_Max));
             if (orders.empty()) return "0";
             ret += std::to_string(orders.size());
@@ -424,7 +427,7 @@ namespace Sirius {
         std::string refund_ticket(const cmdType& info) {
             if (info.argNum < 1 || info.argNum > 2) return "-1";
             auto uid = info.args['u'-'a'];
-            if (!loggedUser.find(uid)) return "-1";
+            if (loggedUser.find(uid) == -1) return "-1";
             auto orders = orderDatabase.rangeFind(std::make_pair(uid, 0), std::make_pair(uid, Int_Max));
             int n = (info.args['n'-'a'].empty()) ? 1 : stringToInt(info.args['n'-'a']);
             if (n > orders.size()) return "-1";
