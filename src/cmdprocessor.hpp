@@ -13,7 +13,7 @@ namespace Sirius {
     constexpr int Argc_Max = 24, CmdTypeNum_Max = 16;
     constexpr int UserID_Max = 21, Password_Max = 31, Name_Max = 16, MailAddr_Max = 31, UserNum_Max = 5000321; //Username = UserID
     constexpr int TrainID_Max = 21, StationNum_Max = 101, StationName_Max = 31;
-    constexpr int Int_Max = 0x7fffffff, Pool_Max = 100005;
+    constexpr int Int_Max = 0x7fffffff, Pool_Max = 1005;
 
     typedef FixedStr<UserID_Max> uidType;
     typedef FixedStr<Password_Max> pwdType;
