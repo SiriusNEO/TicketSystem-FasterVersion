@@ -15,10 +15,10 @@ namespace Sirius {
     class FileManager {
         public:
             int siz;
-            __Amagi::database_cached<keyType, int> dataStructure;
+            Bptree<keyType, int> dataStructure;
             std::fstream dataFile;
         public:
-            FileManager(const char* dataFileName) : dataStructure("i"+std::string(dataFileName)) {
+            FileManager(const char* dataFileName) : dataStructure(("1"+std::string(dataFileName)).c_str(), ("2"+std::string(dataFileName)).c_str()) {
                 dataFile.open(dataFileName, std::ios::ate | std::ios::in | std::ios::out | std::ios::binary);
                 if (!dataFile) {
                     std::ofstream outFile(dataFileName);
@@ -54,7 +54,7 @@ namespace Sirius {
             }
 
             bool modify(const keyType& key, valueType val) { //单点修改，返回是否修改成功
-                auto index = dataStructure.query(key);
+                auto index = dataStructure.find(key);
                 if (!index.first) return false;
                 dataFile.seekp(index.second, std::ios::beg);
                 dataFile.write(reinterpret_cast<char *>(&val), sizeof(valueType));
@@ -62,7 +62,7 @@ namespace Sirius {
             }
 
             std::pair<valueType, bool> find(const keyType& key) {
-                auto index = dataStructure.query(key);
+                auto index = dataStructure.find(key);
                 valueType tmp;
                 if (!index.first) return std::make_pair(tmp, false);
                 dataFile.seekg(index.second, std::ios::beg);
@@ -71,7 +71,8 @@ namespace Sirius {
             }
 
             std::vector<valueType> rangeFind(const keyType& key1, const keyType& key2) {
-                auto index = dataStructure.range(key1, key2);
+                std::vector<int> index;
+                dataStructure.range_find(key1, key2, index);
                 std::vector<valueType> ret;
                 for (auto i : index) {
                     valueType tmp;

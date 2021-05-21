@@ -46,11 +46,11 @@ int delete_num=0;
 
             class recycle_pool{//动态数组不好存进外存诶
             public://1--base
-                int free_off1[25001] = {0};
-                int free_off2[25001] = {0};
+                int free_off1[250001] = {0};
+                int free_off2[250001] = {0};
                 int free_num1 = 0;
                 int free_num2 = 0;
-                const  int capacity = 25000;
+                const  int capacity = 250000;
 
                 recycle_pool() {
                     memset(&(free_off1),0,sizeof(free_off1));
@@ -219,7 +219,6 @@ int delete_num=0;
                     head_node->next_node = tail_node;
                     data_num = 0;
                 }
-
             };
 
         public:
@@ -331,7 +330,6 @@ int delete_num=0;
                 fwrite(&(value_), the_tree->value_size, 1, f_value);
                // std::cout<<off_<<'\n';
                 return off_;
-
             }
 
             //更新value
@@ -498,7 +496,7 @@ int delete_num=0;
 
         };
 
-        static const int MAX_SIZ = (4088 - sizeof(long)*3 -  sizeof(bool)) / sizeof(key_offset);
+        static const int MAX_SIZ = (4096 - sizeof(int)*3 -  sizeof(bool)-sizeof(std::pair<Node *, int>)) / sizeof(key_offset)-1;;
         static const int MIN_SIZ = MAX_SIZ / 2;
         typedef std::pair<Node *, int > node_index;
         static const int Node_size = sizeof(Node);
@@ -979,7 +977,7 @@ int delete_num=0;
 
 
         explicit Bptree(const char *file_name1 = "data1", const char *file_name2 = "data2") {
-            the_manager=new Diskmanager(this,91,file_name1,file_name2);
+            the_manager=new Diskmanager(this,291,file_name1,file_name2);
         }
 
         ~Bptree() {
