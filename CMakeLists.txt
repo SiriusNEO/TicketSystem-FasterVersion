@@ -12,9 +12,6 @@ include_directories(src)
 add_executable(code
         db/bpt.hpp
         db/hash_map.h
-        db/database.hpp
-        db/database_cached.hpp
-        db/List.hpp
         db/filemanager.hpp
         lib/bst.hpp
         lib/mytools.hpp
