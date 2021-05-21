@@ -495,7 +495,7 @@ int delete_num=0;
             }
 
         };
-        static const int MAX_SIZ = (4096 - sizeof(int)*3 -  sizeof(bool)-sizeof(std::pair<Node *, int>)) / sizeof(key_offset)-1;
+        static const int MAX_SIZ = 1700;
         static const int MIN_SIZ = MAX_SIZ / 2;
         typedef std::pair<Node *, int > node_index;
         static const int Node_size = sizeof(Node);
@@ -1003,7 +1003,6 @@ int delete_num=0;
 
         bool insert(const Key &key, const Value &value)
         {
-
             //bug_num++;
             //std::cout<<bug_num<<'\n';
 
@@ -1046,16 +1045,16 @@ int delete_num=0;
             return false;
         }
 
-        std::pair<bool, Value> find(const Key &key)
+        std::pair<Value, bool> find(const Key &key)
         {
             node_index parent = search_node(key);
             Value val;
             if (parent.first != nullptr){
                 the_manager->read_value(parent.first->little_node[parent.second].second,val);
-                return std::make_pair(true, val);
+                return std::make_pair(val, true);
                 //return pair<bool,Value>(true,val);
             }
-            return std::make_pair(false, val);
+            return std::make_pair(val, false);
            // return pair<bool,Value>(false,Value());
         }
 

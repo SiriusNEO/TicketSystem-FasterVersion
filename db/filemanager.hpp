@@ -6,7 +6,6 @@
 #define TICKETSYSTEM_2021_MAIN_FILEMANAGER_HPP
 
 #include "bpt.hpp"
-#include "database_cached.hpp"
 #include <vector>
 #include <fstream>
 
@@ -15,37 +14,34 @@ namespace Sirius {
     class FileManager {
         public:
             int siz;
-            Bptree<keyType, int> dataStructure;
-            std::fstream dataFile;
+            Bptree<keyType, valueType> dataStructure;
+            std::fstream sizeFile;
         public:
-            FileManager(const char* dataFileName) : dataStructure(("1"+std::string(dataFileName)).c_str(), ("2"+std::string(dataFileName)).c_str()) {
-                dataFile.open(dataFileName, std::ios::ate | std::ios::in | std::ios::out | std::ios::binary);
-                if (!dataFile) {
-                    std::ofstream outFile(dataFileName);
+            FileManager(const char* sizeFileName) : dataStructure(("1"+std::string(sizeFileName)).c_str(), ("2"+std::string(sizeFileName)).c_str()) {
+                sizeFile.open(sizeFileName, std::ios::ate | std::ios::in | std::ios::out | std::ios::binary);
+                if (!sizeFile) {
+                    std::ofstream outFile(sizeFileName);
                     outFile.close();
                     siz = 0;
-                    dataFile.open(dataFileName, std::ios::ate | std::ios::in | std::ios::out | std::ios::binary);
-                    dataFile.write(reinterpret_cast<char *>(&siz), sizeof(int));
+                    sizeFile.open(sizeFileName, std::ios::ate | std::ios::in | std::ios::out | std::ios::binary);
+                    sizeFile.write(reinterpret_cast<char *>(&siz), sizeof(int));
                 }
                 else {
-                    dataFile.seekg(0, std::ios::beg);
-                    dataFile.read(reinterpret_cast<char *>(&siz), sizeof(int));
+                    sizeFile.seekg(0, std::ios::beg);
+                    sizeFile.read(reinterpret_cast<char *>(&siz), sizeof(int));
                 }
             }
             ~FileManager() {
-                dataFile.seekp(0, std::ios::beg);
-                dataFile.write(reinterpret_cast<char *>(&siz), sizeof(int));
-                dataFile.close();
+                sizeFile.seekp(0, std::ios::beg);
+                sizeFile.write(reinterpret_cast<char *>(&siz), sizeof(int));
+                sizeFile.close();
             }
 
             int size() const {return siz;}
 
-            void insert(const keyType& key, valueType val) {
+            void insert(const keyType& key, const valueType& val) {
                 ++siz;
-                dataFile.seekp(0, std::ios::end);
-                int offset = dataFile.tellp();
-                dataFile.write(reinterpret_cast<char *>(&val), sizeof(valueType));
-                dataStructure.insert(key, offset);
+                dataStructure.insert(key, val);
             }
 
             bool del(const keyType& key) { //单点删除
@@ -53,33 +49,17 @@ namespace Sirius {
                 return dataStructure.erase(key);
             }
 
-            bool modify(const keyType& key, valueType val) { //单点修改，返回是否修改成功
-                auto index = dataStructure.find(key);
-                if (!index.first) return false;
-                dataFile.seekp(index.second, std::ios::beg);
-                dataFile.write(reinterpret_cast<char *>(&val), sizeof(valueType));
-                return true;
+            bool modify(const keyType& key, const valueType& val) { //单点修改，返回是否修改成功
+                return dataStructure.modify(key, val);
             }
 
             std::pair<valueType, bool> find(const keyType& key) {
-                auto index = dataStructure.find(key);
-                valueType tmp;
-                if (!index.first) return std::make_pair(tmp, false);
-                dataFile.seekg(index.second, std::ios::beg);
-                dataFile.read(reinterpret_cast<char *>(&tmp), sizeof(valueType));
-                return std::make_pair(tmp, true);
+                return dataStructure.find(key);
             }
 
             std::vector<valueType> rangeFind(const keyType& key1, const keyType& key2) {
-                std::vector<int> index;
-                dataStructure.range_find(key1, key2, index);
                 std::vector<valueType> ret;
-                for (auto i : index) {
-                    valueType tmp;
-                    dataFile.seekg(i, std::ios::beg);
-                    dataFile.read(reinterpret_cast<char *>(&tmp), sizeof(valueType));
-                    ret.push_back(tmp);
-                }
+                dataStructure.range_find(key1, key2, ret);
                 return ret;
             }
 
