@@ -46,11 +46,11 @@ int delete_num=0;
 
             class recycle_pool{//动态数组不好存进外存诶
             public://1--base
-                int free_off1[250001] = {0};
-                int free_off2[250001] = {0};
+                int free_off1[25001] = {0};
+                int free_off2[25001] = {0};
                 int free_num1 = 0;
                 int free_num2 = 0;
-                const  int capacity = 250000;
+                const  int capacity = 25000;
 
                 recycle_pool() {
                     memset(&(free_off1),0,sizeof(free_off1));
