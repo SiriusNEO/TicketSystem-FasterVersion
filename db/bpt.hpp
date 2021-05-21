@@ -93,7 +93,7 @@ int delete_num=0;
 
                     node(node *front_, node *next_, data_type *data_, int offset_) {
                         front_node = front_;
-                        next_node = next_;
+                         next_node = next_;
                         node_offset = offset_;
                         data = data_;
                     }
@@ -495,8 +495,7 @@ int delete_num=0;
             }
 
         };
-
-        static const int MAX_SIZ = (4096 - sizeof(int)*3 -  sizeof(bool)-sizeof(std::pair<Node *, int>)) / sizeof(key_offset)-1;;
+        static const int MAX_SIZ = (4096 - sizeof(int)*3 -  sizeof(bool)-sizeof(std::pair<Node *, int>)) / sizeof(key_offset)-1;
         static const int MIN_SIZ = MAX_SIZ / 2;
         typedef std::pair<Node *, int > node_index;
         static const int Node_size = sizeof(Node);
@@ -737,7 +736,7 @@ int delete_num=0;
         //v
         void leaf_borrow_from_r(Node* now_node,Node* bro_node,Node* father_node,int now_pos){
 
-            std::cout<<"leaf_borrow_from_r"<<'\n';
+            //std::cout<<"leaf_borrow_from_r"<<'\n';
 
             now_node->little_node[++now_node->siz] = bro_node->little_node[1];
 
@@ -768,7 +767,7 @@ int delete_num=0;
 
         //v
         void leaf_merge_r(Node* now_node,Node* bro_node,Node* father_node,int now_pos){
-            std::cout<<"leaf_merge_r"<<'\n';
+            //std::cout<<"leaf_merge_r"<<'\n';
             for(int i = 1; i <= bro_node->siz; ++i){
                 now_node->little_node[now_node->siz + i] = bro_node->little_node[i];
             }
