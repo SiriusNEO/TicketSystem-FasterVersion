@@ -91,7 +91,7 @@ namespace Sirius {
     Bptree<std::pair<uidType, int>, Order> orderDatabase; // (uid, oid) -> order
     Bptree<std::pair<std::pair<TimeType, tidType>, int>, Order > orderQueue;// (startDay, tid, oid) -> order
 
-    int (System::*Interfaces[CmdTypeNum_Max])(const cmdType&) = {&System::add_user, &System::login, &System::logout, &System::query_profile, &System::modify_profile,
+    std::string (System::*Interfaces[CmdTypeNum_Max])(const cmdType&) = {&System::add_user, &System::login, &System::logout, &System::query_profile, &System::modify_profile,
                                                                  &System::add_train, &System::release_train, &System::query_train, &System::delete_train, &System::query_ticket,
                                                                  &System::query_transfer, &System::buy_ticket, &System::query_order, &System::refund_ticket, &System::clean,
                                                                  &System::exit
@@ -104,95 +104,86 @@ namespace Sirius {
         System():userDatabase("user.bin", "user1.bin"), loggedUser(),trainDatabase("train.bin", "train1.bin"), dayTrainDatabase("daytrain.bin", "daytrain1.bin"),
         stationDatabase("station.bin", "station1.bin"), orderDatabase("order.bin", "order1.bin"), orderQueue("queue.bin", "queue1.bin"){}
 
-        bool response(const std::string &cmdStr) { // false::quit
+        std::pair<bool, std::string> response(const std::string &cmdStr) { // false::quit
             auto info = parse(cmdStr);
             if (info.second) {
-                int result = (this->* Interfaces[info.first.cmdNo])(info.first);
-                if (result == 0 || result == -1) printf("%d", result);
-                putchar('\n');
-                return result != 2;
+                std::string result = (this->* Interfaces[info.first.cmdNo])(info.first);
+                return std::make_pair(result != "bye", result);
             }
-            return false;
+            return std::make_pair(false, "parse error!");
         }
 
-        int add_user(const cmdType& info) {
-            if (info.argNum != 6) return -1;
+        std::string add_user(const cmdType& info) {
+            if (info.argNum != 6) return "-1";
             uidType uid = info.args['u'-'a'];
             if (userDatabase.size()) { //非第一次添加用户
                 int curUserPriv = loggedUser.find(info.args['c'-'a']);
-                if (curUserPriv == -1) return -1; //-c未登录
+                if (curUserPriv == -1) return "-1"; //-c未登录
                 int g = stringToInt(info.args['g'-'a']);
-                if (curUserPriv <= g) return -1; //-g权限大等于-c
-                if (userDatabase.find(uid).second) return -1; //id已有
+                if (curUserPriv <= g) return "-1"; //-g权限大等于-c
+                if (userDatabase.find(uid).second) return "-1"; //id已有
                 userDatabase.insert(uid, (User){info.args['p'-'a'], info.args['n'-'a'], info.args['m'-'a'], g});
-                return 0;
+                return "0";
             }
             //创建第一个用户，直接插入，权限为10
             userDatabase.insert(uid, (User){info.args['p'-'a'], info.args['n'-'a'], info.args['m'-'a'], 10});
-            return 0;
+            return "0";
         }
 
-        int login(const cmdType& info) {
-            if (info.argNum != 2) return -1;
+        std::string login(const cmdType& info) {
+            if (info.argNum != 2) return "-1";
             uidType uid(info.args['u'-'a']);
             auto targetUser = userDatabase.find(uid);
-            if (!targetUser.second || loggedUser.find(uid) != -1) return -1; //无此用户、重复登陆
-            if (targetUser.first.password != pwdType(info.args['p'-'a'])) return -1; //密码错误
+            if (!targetUser.second || loggedUser.find(uid) != -1) return "-1"; //无此用户、重复登陆
+            if (targetUser.first.password != pwdType(info.args['p'-'a'])) return "-1"; //密码错误
             loggedUser.insert(uid, targetUser.first.privilege);
-            return 0;
+            return "0";
         }
 
-        int logout(const cmdType& info) {
-            if (info.argNum != 1) return -1;
+        std::string logout(const cmdType& info) {
+            if (info.argNum != 1) return "-1";
             uidType uid(info.args['u'-'a']);
-            if (loggedUser.find(uid) == -1) return -1; //未登录
+            if (loggedUser.find(uid) == -1) return "-1"; //未登录
             loggedUser.del(uid);
-            return 0;
+            return "0";
         }
 
-        int query_profile(const cmdType& info) {
-            if (info.argNum != 2) return -1;
+        std::string query_profile(const cmdType& info) {
+            if (info.argNum != 2) return "-1";
             int curUserPriv = loggedUser.find(info.args['c'-'a']);
-            if (curUserPriv == -1) return -1; //-c未登录
+            if (curUserPriv == -1) return "-1"; //-c未登录
             auto targetUser = userDatabase.find(info.args['u'-'a']);
-            if (!targetUser.second) return -1; //-u 无此用户
-            if (curUserPriv <= targetUser.first.privilege && info.args['c'-'a'] != info.args['u'-'a']) return -1;
+            if (!targetUser.second) return "-1"; //-u 无此用户
+            if (curUserPriv <= targetUser.first.privilege && info.args['c'-'a'] != info.args['u'-'a']) return "-1";
             //-c权限小等于-u权限，且-c和-u不同
-            write(info.args['u'-'a'].c_str());putchar(' ');
-            write(targetUser.first.name.str);putchar(' ');
-            write(targetUser.first.mailAddr.str);putchar(' ');
-            writeInt(targetUser.first.privilege);
-            return 1;
+            return info.args['u'-'a'] + " " + std::string(targetUser.first.name.str) + " " + std::string(targetUser.first.mailAddr.str) + " " + std::to_string(targetUser.first.privilege);
         }
 
-        int modify_profile(const cmdType& info) {
-            if (info.argNum < 2 || info.argNum > 6) return -1;
+        std::string modify_profile(const cmdType& info) {
+            if (info.argNum < 2 || info.argNum > 6) return "-1";
             int curUserPriv = loggedUser.find(info.args['c'-'a']);
-            if (curUserPriv == -1) return -1; //-c 未登录
+            if (curUserPriv == -1) return "-1"; //-c 未登录
             uidType uid = info.args['u'-'a'];
             auto targetUser = userDatabase.find(uid);
-            if (!targetUser.second) return -1; //-u 无此用户
-            if (curUserPriv <= targetUser.first.privilege && info.args['c'-'a'] != info.args['u'-'a']) return -1; //权限大等于或是同名，取反变成与
-            if (stringToInt(info.args['g'-'a']) >= curUserPriv) return -1; //-g 低于 -c
+            if (!targetUser.second) return "-1"; //-u 无此用户
+            if (curUserPriv <= targetUser.first.privilege && info.args['c'-'a'] != info.args['u'-'a']) return "-1"; //权限大等于或是同名，取反变成与
+            if (stringToInt(info.args['g'-'a']) >= curUserPriv) return "-1"; //-g 低于 -c
 
             auto oldPassword = (info.args['p'-'a'].empty()) ? targetUser.first.password : info.args['p'-'a'];
             auto oldName = (info.args['n'-'a'].empty()) ? targetUser.first.name : info.args['n'-'a'];
             auto oldMailAddr = (info.args['m'-'a'].empty()) ? targetUser.first.mailAddr : info.args['m'-'a'];
             auto oldPrivilege = (info.args['g'-'a'].empty()) ? targetUser.first.privilege : stringToInt(info.args['g'-'a']);
-
+            
             if (!info.args['g'-'a'].empty() && loggedUser.find(uid) != -1) loggedUser.insert(uid, oldPrivilege); //修改权限
+            
             userDatabase.modify(uid, (User){oldPassword, oldName, oldMailAddr, oldPrivilege});
-            write(info.args['u'-'a'].c_str());putchar(' ');
-            write(oldName.str);putchar(' ');
-            write(oldMailAddr.str);putchar(' ');
-            writeInt(oldPrivilege);
-            return 1;
+            return info.args['u'-'a'] + " " + std::string(oldName.str) + " " + std::string(oldMailAddr.str) + " " + std::to_string(oldPrivilege);
         }
 
-        int add_train(const cmdType& info) {
-            if (info.argNum != 10) return -1;
+        std::string add_train(const cmdType& info) {
+            if (info.argNum != 10) return "-1";
             tidType id = info.args['i'-'a'];
-            if (trainDatabase.find(id).second) return -1; //tid已有
+            if (trainDatabase.find(id).second) return "-1"; //tid已有
 
             Train newTrain = (Train){id, stringToInt(info.args['n'-'a'])};
             newTrain.totalSeatNum = stringToInt(info.args['m'-'a']);
@@ -219,14 +210,14 @@ namespace Sirius {
             newTrain.startSaleDate = tempStorage1[0] + " 00:00", newTrain.endSaleDate = tempStorage1[1] + " 00:00";
             newTrain.type = info.args['y'-'a'][0];
             trainDatabase.insert(newTrain.trainID, newTrain);
-            return 0;
+            return "0";
         }
 
-        int release_train(const cmdType& info) {
-            if (info.argNum != 1) return -1;
+        std::string release_train(const cmdType& info) {
+            if (info.argNum != 1) return "-1";
             tidType id = info.args['i'-'a'];
             auto targetTrain = trainDatabase.find(id);
-            if (!targetTrain.second || targetTrain.first.isReleased) return -1; //找不到或已released
+            if (!targetTrain.second || targetTrain.first.isReleased) return "-1"; //找不到或已released
             for (auto i = targetTrain.first.startSaleDate; i <= targetTrain.first.endSaleDate; i += 24*60) {
                 DayTrain dayTrain{};
                 for (int j = 0; j < targetTrain.first.stationNum; ++j) dayTrain.seatNum[j] = targetTrain.first.totalSeatNum;
@@ -238,64 +229,56 @@ namespace Sirius {
             }
             targetTrain.first.isReleased = true;
             trainDatabase.modify(id, targetTrain.first);
-            return 0;
+            return "0";
         }
 
-        int query_train(const cmdType& info) {
-            if (info.argNum != 2) return -1;
+        std::string query_train(const cmdType& info) {
+            if (info.argNum != 2) return "-1";
             tidType id = info.args['i'-'a'];
             auto targetTrain = trainDatabase.find(id);
             TimeType day(info.args['d'-'a'] + " 00:00");
 
-            if (!targetTrain.second) return -1; //无此车
-            if (!(targetTrain.first.startSaleDate <= day && day <= targetTrain.first.endSaleDate)) return -1; //这里的day是发车时间
+            if (!targetTrain.second) return "-1"; //无此车
+            if (!(targetTrain.first.startSaleDate <= day && day <= targetTrain.first.endSaleDate)) return "-1"; //这里的day是发车时间
             auto dayTrain = dayTrainDatabase.find(std::make_pair(day, id));
-            write(targetTrain.first.trainID.str);putchar(' ');putchar(targetTrain.first.type);putchar('\n');
+            std::string ret = std::string(targetTrain.first.trainID.str) + " " + targetTrain.first.type + "\n";
             for (int i = 0; i < targetTrain.first.stationNum; ++i) {
-                write(targetTrain.first.stations[i].str);putchar(' ');
+                ret += std::string(targetTrain.first.stations[i].str) + " ";
                 if (i == 0) {
-                    write("xx-xx xx:xx -> ");
-                    write((day+targetTrain.first.leavingTimes[0]).toFormatString().c_str());
-                    putchar(' '), putchar('0'), putchar(' ');
-                    if (!targetTrain.first.isReleased) writeInt(targetTrain.first.totalSeatNum), putchar('\n');
-                    else writeInt(dayTrain.first.seatNum[0]), putchar('\n');
+                    ret += "xx-xx xx:xx -> " + (day+targetTrain.first.leavingTimes[0]).toFormatString() + " 0 ";
+                    if (!targetTrain.first.isReleased) ret += std::to_string(targetTrain.first.totalSeatNum) + "\n";
+                    else ret += std::to_string(dayTrain.first.seatNum[0]) + "\n";
                 }
                 else if (i == targetTrain.first.stationNum-1){
-                    write((day+targetTrain.first.arrivingTimes[i]).toFormatString().c_str());
-                    write(" -> xx-xx xx:xx ");
-                    writeInt(targetTrain.first.priceSum[i]);
-                    putchar(' '), putchar('x');
+                    ret += (day+targetTrain.first.arrivingTimes[i]).toFormatString() + " -> xx-xx xx:xx " + std::to_string(targetTrain.first.priceSum[i]) + " x";
                 }
                 else {
-                   write((day+targetTrain.first.arrivingTimes[i]).toFormatString().c_str());
-                   write(" -> ");
-                   write((day+targetTrain.first.leavingTimes[i]).toFormatString().c_str());putchar(' ');
-                   writeInt(targetTrain.first.priceSum[i]);putchar(' ');
-                   if (!targetTrain.first.isReleased) writeInt(targetTrain.first.totalSeatNum), putchar('\n');
-                   else writeInt(dayTrain.first.seatNum[i]), putchar('\n');
+                   ret += (day+targetTrain.first.arrivingTimes[i]).toFormatString() + " -> " + (day+targetTrain.first.leavingTimes[i]).toFormatString() + " " + std::to_string(targetTrain.first.priceSum[i]) + " ";
+                   if (!targetTrain.first.isReleased) ret += std::to_string(targetTrain.first.totalSeatNum) + "\n";
+                   else ret += std::to_string(dayTrain.first.seatNum[i]) + "\n";
                 }
             }
-            return 1;
+            return ret;
         }
 
-        int delete_train(const cmdType& info) {
-            if (info.argNum != 1) return -1;
+        std::string delete_train(const cmdType& info) {
+            if (info.argNum != 1) return "-1";
             tidType id = info.args['i'-'a'];
             auto targetTrain = trainDatabase.find(id);
-            if (!targetTrain.second || targetTrain.first.isReleased) return -1; //无此车或已发行
+            if (!targetTrain.second || targetTrain.first.isReleased) return "-1"; //无此车或已发行
             trainDatabase.erase(id);
-            return 0;
+            return "0";
         }
 
-        int query_ticket(const cmdType& info) {
-            if (info.argNum < 3 || info.argNum > 4) return -1;
+        std::string query_ticket(const cmdType& info) {
+            if (info.argNum < 3 || info.argNum > 4) return "-1";
             TimeType day = info.args['d'-'a'] + " 00:00";
             staNameType s = info.args['s'-'a'], t = info.args['t'-'a'];
-            if (s == t) return 0; //起终相同，直接判掉
+            if (s == t) return "0"; //起终相同，直接判掉
             int sLen = 0, tLen = 0;
             stationDatabase.range_find(std::make_pair(s, ""), std::make_pair(s, TrainIDStr_Max), sList, sLen);
             stationDatabase.range_find(std::make_pair(t, ""), std::make_pair(t, TrainIDStr_Max), tList, tLen);
-            if (!sLen || !tLen) return 0; //无票
+            if (!sLen || !tLen) return "0"; //无票
             auto si = sList, ti = tList;
             int ticketCnt = 0;
             while (si != sList+sLen && ti != tList+tLen) {
@@ -309,37 +292,32 @@ namespace Sirius {
                     si++, ti++;
                 }
             }
-            if (!ticketCnt) return 0;
+            if (!ticketCnt) return "0";
             if (info.argNum == 4 && info.args['p'-'a'] == "cost") qsort(tickets, tickets+ticketCnt-1, costCmp);
             else qsort(tickets, tickets+ticketCnt-1, timeCmp);
-            writeInt(ticketCnt);
+            std::string ret = std::to_string(ticketCnt);
             for (int i = 0; i < ticketCnt; ++i) {
                 auto train = trainDatabase.find(tickets[i].trainID);
                 TimeType startDay = day - train.first.leavingTimes[tickets[i].s].getDate();
                 auto dayTrain = dayTrainDatabase.find(std::make_pair(startDay, tickets[i].trainID));
-                std::string lea = (startDay + train.first.leavingTimes[tickets[i].s]).toFormatString(),
+                std::string from = train.first.stations[tickets[i].s].str, to = train.first.stations[tickets[i].t].str,
+                            lea = (startDay + train.first.leavingTimes[tickets[i].s]).toFormatString(),
                             arr = (startDay + train.first.arrivingTimes[tickets[i].t]).toFormatString();
-                putchar('\n');
-                write(tickets[i].trainID.str);putchar(' ');
-                write(train.first.stations[tickets[i].s].str);putchar(' ');
-                write(lea.c_str()), putchar(' '), putchar('-'), putchar('>'), putchar(' ');
-                write(train.first.stations[tickets[i].t].str);putchar(' ');
-                write(arr.c_str()), putchar(' ');
-                writeInt(tickets[i].cost), putchar(' ');
-                writeInt(dayTrain.first.querySeat(tickets[i].s, tickets[i].t-1));
+                std::string seat = std::to_string(dayTrain.first.querySeat(tickets[i].s, tickets[i].t-1));
+                ret += "\n" + std::string(tickets[i].trainID.str) + " " + from + " " + lea + " -> " + to + " " + arr + " " + std::to_string(tickets[i].cost) + " " + seat;
             }
-            return 1;
+            return ret;
         }
 
-        int query_transfer(const cmdType& info) {
-            if (info.argNum < 3 || info.argNum > 4) return -1;
+        std::string query_transfer(const cmdType& info) {
+            if (info.argNum < 3 || info.argNum > 4) return "-1";
             TimeType day = info.args['d'-'a'] + " 00:00";
             staNameType s = info.args['s'-'a'], t = info.args['t'-'a'];
-            if (s == t) return 0;
+            if (s == t) return "0";
             int sLen = 0, tLen = 0;
             stationDatabase.range_find(std::make_pair(s, ""), std::make_pair(s, TrainIDStr_Max), sList, sLen);
             stationDatabase.range_find(std::make_pair(t, ""), std::make_pair(t, TrainIDStr_Max), tList, tLen);
-            if (!sLen || !tLen) return 0; //无票
+            if (!sLen || !tLen) return "0"; //无票
             int ans = Int_Max, firstTime = Int_Max;
             std::string ret;
             for (auto si = sList; si != sList+sLen; si++) {
@@ -390,33 +368,29 @@ namespace Sirius {
                         }
                 }
             }
-            if (ans != Int_Max) {
-                write(ret.c_str());
-                return 1;
-            }
-            return 0;
+            return (ans == Int_Max) ? "0" : ret;
         }
 
-        int buy_ticket(const cmdType& info) {
-            if (info.argNum < 6 || info.argNum > 7) return -1;
+        std::string buy_ticket(const cmdType& info) {
+            if (info.argNum < 6 || info.argNum > 7) return "-1";
             uidType uid = info.args['u'-'a'];
-            if (loggedUser.find(uid) == -1) return -1; //未登录
+            if (loggedUser.find(uid) == -1) return "-1"; //未登录
             TimeType day = info.args['d'-'a'] + " 00:00";
             tidType id = info.args['i'-'a'];
             auto train = trainDatabase.find(id);
             int buyNum = stringToInt(info.args['n'-'a']);
-            if (!train.second || !train.first.isReleased || buyNum > train.first.totalSeatNum) return -1;
+            if (!train.second || !train.first.isReleased || buyNum > train.first.totalSeatNum) return "-1";
             int f = -1, t = -1;
             for (int i = 0; i < train.first.stationNum && (f == -1 || t == -1); ++i) {
                 if (train.first.stations[i] == info.args['f'-'a']) f = i;
                 if (train.first.stations[i] == info.args['t'-'a']) t = i;
             }
-            if (f == -1 || t == -1 || f >= t) return -1;
+            if (f == -1 || t == -1 || f >= t) return "-1";
             TimeType startDay = day - train.first.leavingTimes[f].getDate();
-            if (!(train.first.startSaleDate <= startDay && startDay <= train.first.endSaleDate)) return -1;
+            if (!(train.first.startSaleDate <= startDay && startDay <= train.first.endSaleDate)) return "-1";
             auto dayTrain = dayTrainDatabase.find(std::make_pair(startDay, id));
             int remainSeat = dayTrain.first.querySeat(f, t-1);
-            if ((info.argNum != 7 || info.args['q'-'a'] == "false") && remainSeat < buyNum) return -1;
+            if ((info.argNum != 7 || info.args['q'-'a'] == "false") && remainSeat < buyNum) return "-1";
             int price = train.first.priceSum[t]-train.first.priceSum[f], oid = orderDatabase.size();
             Order order = (Order){id, uid, f, t, train.first.stations[f], train.first.stations[t], startDay, train.first.leavingTimes[f], train.first.arrivingTimes[t], oid, price, buyNum};
             if (remainSeat >= buyNum) {
@@ -425,59 +399,54 @@ namespace Sirius {
                 order.status = SUCCESS;
                 orderDatabase.insert(std::make_pair(uid, oid), order);
                 long long ret = (long long)price*buyNum;
-                write(std::to_string(ret).c_str());
-                return 1;
+                return std::to_string(ret);
             }
             order.status = PENDING;
             orderDatabase.insert(std::make_pair(uid, oid), order);
             orderQueue.insert(std::make_pair(std::make_pair(startDay, train.first.trainID), oid), order);
-            write("queue");
-            return 1;
+            return "queue";
         }
 
-        int query_order(const cmdType& info) {
-            if (info.argNum != 1) return -1;
+        std::string query_order(const cmdType& info) {
+            if (info.argNum != 1) return "-1";
+            std::string ret;
             uidType uid = info.args['u'-'a'];
-            if (loggedUser.find(uid) == -1) return -1;
+            if (loggedUser.find(uid) == -1) return "-1";
+            Order orders[orderDatabase.size()+2];
             int orderLen = 0;
             orderDatabase.range_find(std::make_pair(uid, 0), std::make_pair(uid, Int_Max), orders, orderLen);
-            if (!orderLen) return 0;
-            writeInt(orderLen);
+            if (!orderLen) return "0";
+            ret += std::to_string(orderLen);
             for (int i = orderLen-1; i >= 0; --i) {
-                putchar('\n');
+                ret += "\n";
                 auto it = orders+i;
                 switch (it->status) {
-                    case SUCCESS:write("[success] ");break;
-                    case PENDING:write("[pending] ");break;
-                    case REFUNDED:write("[refunded] ");
+                    case SUCCESS:ret += "[success] ";break;
+                    case PENDING:ret += "[pending] ";break;
+                    case REFUNDED:ret += "[refunded] ";
                 }
-                write(it->trainID.str), putchar(' ');
-                write(it->from.str), putchar(' ');
-                write((it->startDay+it->leavingTime).toFormatString().c_str()), putchar(' '), putchar('-'), putchar('>'), putchar(' ');
-                write(it->to.str), putchar(' ');
-                write((it->startDay+it->arrivingTime).toFormatString().c_str()), putchar(' ');
-                writeInt(it->price), putchar(' ');
-                writeInt(it->num);
+                ret += std::string(it->trainID.str) + " " + std::string(it->from.str) + " " + (it->startDay+it->leavingTime).toFormatString() + " -> "
+                        + std::string(it->to.str) + " " + (it->startDay+it->arrivingTime).toFormatString() + " " + std::to_string(it->price) + " " + std::to_string(it->num);
             }
-            return 1;
+            return ret;
         }
 
-        int refund_ticket(const cmdType& info) {
-            if (info.argNum < 1 || info.argNum > 2) return -1;
+        std::string refund_ticket(const cmdType& info) {
+            if (info.argNum < 1 || info.argNum > 2) return "-1";
             auto uid = info.args['u'-'a'];
-            if (loggedUser.find(uid) == -1) return -1;
+            if (loggedUser.find(uid) == -1) return "-1";
             int orderLen = 0;
             orderDatabase.range_find(std::make_pair(uid, 0), std::make_pair(uid, Int_Max), orders, orderLen);
             int n = (info.args['n'-'a'].empty()) ? 1 : stringToInt(info.args['n'-'a']);
-            if (n > orderLen) return -1;
+            if (n > orderLen) return "-1";
             auto it = orders + orderLen - n;
-            if (it->status == REFUNDED) return -1;
+            if (it->status == REFUNDED) return "-1";
             auto oldStatus = it->status;
             it->status = REFUNDED;
             orderDatabase.modify(std::make_pair(uid, it->orderID), *it);
             if (oldStatus == PENDING) {
                 orderQueue.erase(std::make_pair(std::make_pair(it->startDay, it->trainID), it->orderID));
-                return 0;
+                return "0";
             }
             auto dayTrain = dayTrainDatabase.find(std::make_pair(it->startDay, it->trainID));
             dayTrain.first.modifySeat(it->fromIndex, it->toIndex-1, it->num);
@@ -493,10 +462,10 @@ namespace Sirius {
                 }
             }
             dayTrainDatabase.modify(std::make_pair(it->startDay, it->trainID), dayTrain.first);
-            return 0;
+            return "0";
         }
 
-        int clean(const cmdType& info) {
+        std::string clean(const cmdType& info) {
             loggedUser.clear();
             userDatabase.clear();
             trainDatabase.clear();
@@ -504,11 +473,10 @@ namespace Sirius {
             stationDatabase.clear();
             orderDatabase.clear();
             orderQueue.clear();
-            return 0;
+            return "0";
         }
-        int exit(const cmdType& info) {
-            write("bye");
-            return 2;
+        std::string exit(const cmdType& info) {
+            return "bye";
         }
     };
 }

@@ -13,13 +13,9 @@ void UserPressure() {
         auto uid = Sirius::randString(19);
         cache.push_back(uid);
         auto res = ticketSystem.response("add_user -c root -u " + uid + " -p 123 -n fofo -m xxx -g 3\n");
-        for (auto ch : res.second) putchar(ch);
-        putchar('\n');
     }
     for (auto it = cache.rbegin(); it != cache.rend(); it++) {
         auto res = ticketSystem.response("login -p 123 -u " + *it + " \n");
-        for (auto ch : res.second) putchar(ch);
-        putchar('\n');
     }
 }
 
@@ -46,11 +42,5 @@ int main() {
     //freopen("data/basic_6/my.out", "w", stdout);
 
     std::string cmd;
-    while (getline(std::cin, cmd)) {
-        auto res = ticketSystem.response(cmd);
-        for (auto ch : res.second) putchar(ch);
-        putchar('\n');
-        if (!res.first) break;
-        cmd.clear();
-    }
+    while (getline(std::cin, cmd) && ticketSystem.response(cmd)) cmd.clear();
 }

@@ -156,6 +156,19 @@ namespace Sirius {
         }
         return ret;
     }
+
+    /* Fastout */
+    void write(const char* str) {
+        fwrite(str, sizeof(char), strlen(str), stdout);
+    }
+
+    void writeInt(int x) {
+        if (!x) {putchar('0');return;}
+        char ret[33];
+        int p = 0;
+        while (x) ret[p++] = (x%10)+48, x /= 10;
+        while (p) --p, putchar(ret[p]);
+    }
 }
 
 #endif //TICKETSYSTEM_2021_MAIN_MYTOOLS_HPP
