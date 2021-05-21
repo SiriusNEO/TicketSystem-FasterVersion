@@ -16,7 +16,6 @@ namespace Sirius {
             int siz;
             Bptree<keyType, valueType> dataStructure;
             std::fstream sizeFile;
-        public:
             FileManager(const char* sizeFileName) : dataStructure(("1"+std::string(sizeFileName)).c_str(), ("2"+std::string(sizeFileName)).c_str()) {
                 sizeFile.open(sizeFileName, std::ios::ate | std::ios::in | std::ios::out | std::ios::binary);
                 if (!sizeFile) {
@@ -59,7 +58,7 @@ namespace Sirius {
 
             std::vector<valueType> rangeFind(const keyType& key1, const keyType& key2) {
                 std::vector<valueType> ret;
-                dataStructure.range_find(key1, key2, ret);
+                //dataStructure.range_find(key1, key2, ret);
                 return ret;
             }
 

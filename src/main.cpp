@@ -1,6 +1,7 @@
 //TicketSystem main.cpp for test
 
 #include "systemcore.hpp"
+#include <vector>
 
 Sirius::System ticketSystem;
 
@@ -41,6 +42,9 @@ void TrainPressure() {
 }
 
 int main() {
+    //freopen("data/basic_6/10.in", "r", stdin);
+    //freopen("data/basic_6/my.out", "w", stdout);
+
     std::string cmd;
     while (getline(std::cin, cmd)) {
         auto res = ticketSystem.response(cmd);

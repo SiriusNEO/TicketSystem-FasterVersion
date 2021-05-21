@@ -18,4 +18,4 @@ add_executable(code
         lib/timetype.hpp
         src/cmdprocessor.hpp
         src/main.cpp
-        src/systemcore.hpp)
+        src/systemcore.hpp lib/vector.hpp)

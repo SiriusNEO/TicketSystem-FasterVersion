@@ -14,6 +14,7 @@ namespace Sirius {
             int val;
             Node *leftSon, *rightSon;
             Node(const keyType& _key, int _val):key(_key), val(_val), leftSon(nullptr), rightSon(nullptr){}
+            ~Node(){delete leftSon, delete rightSon;}
         };
         Node* root;
     public:

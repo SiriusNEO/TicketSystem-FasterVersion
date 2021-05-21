@@ -9,7 +9,6 @@
 #include <fstream>
 #include <cstring>
 #include "hash_map.h"
-#include <vector>
 
 //long long
 
@@ -1095,7 +1094,7 @@ int delete_num=0;
             return true;
         }
 
-        void range_find(const Key &key_low,const Key& key_high,std::vector<Value>&vector_){
+        void range_find(const Key &key_low, const Key& key_high, value_type* ret, int& retCnt){
           //  Key low=key_low,high=key_high;
 
          // std::cout<<key_low<<'\n';
@@ -1109,14 +1108,13 @@ int delete_num=0;
             }
 
             //std::cout<<index<<'\n';
-
+            retCnt = 0;
             while (now_node->little_node[index].first<=key_high)
             {
                 if (now_node->little_node[index].first>=key_low)
                 {
-                    Value value;
-                    the_manager->read_value(now_node->little_node[index].second,value);
-                    vector_.push_back(value);
+                    the_manager->read_value(now_node->little_node[index].second, *(ret+retCnt));
+                    retCnt++;
                 }
                 if (index<now_node->siz)index++;
                 else
