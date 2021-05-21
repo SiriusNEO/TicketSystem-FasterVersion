@@ -10,14 +10,12 @@ include_directories(lib)
 include_directories(src)
 
 add_executable(code
-        db/database.hpp
-        db/database_cached.hpp
+        db/bpt.hpp
+        db/hash_map.h
         db/filemanager.hpp
-        db/List.hpp
-        lib/hashtable.hpp
+        lib/bst.hpp
         lib/mytools.hpp
         lib/timetype.hpp
         src/cmdprocessor.hpp
         src/main.cpp
-        src/systemcore.hpp
-        CMakeLists.txt lib/bst.hpp)
+        src/systemcore.hpp)

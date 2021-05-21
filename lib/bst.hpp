@@ -28,11 +28,11 @@ namespace Sirius {
             Node *now = root;
             while (true) {
                 if (newNode->key < now->key) {
-                    if (now->leftSon == nullptr) {now->leftSon = newNode;break;}
+                    if (now->leftSon == nullptr) {now->leftSon = newNode;return;}
                     else now = now->leftSon;
                 }
                 else if (newNode->key > now->key) {
-                    if (now->rightSon == nullptr) {now->rightSon = newNode;break;}
+                    if (now->rightSon == nullptr) {now->rightSon = newNode;return;}
                     else now = now->rightSon;
                 }
                 else {
