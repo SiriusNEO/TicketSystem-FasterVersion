@@ -249,7 +249,7 @@ namespace Sirius {
 
             if (!targetTrain.second) return -1; //无此车
             if (!(targetTrain.first.startSaleDate <= day && day <= targetTrain.first.endSaleDate)) return -1; //这里的day是发车时间
-            auto dayTrain = dayTrainDatabase.find(std::make_pair(day, id));
+            const auto& dayTrain = dayTrainDatabase.find(std::make_pair(day, id));
             write(targetTrain.first.trainID.str);putchar(' ');putchar(targetTrain.first.type);putchar('\n');
             for (int i = 0; i < targetTrain.first.stationNum; ++i) {
                 write(targetTrain.first.stations[i].str);putchar(' ');
