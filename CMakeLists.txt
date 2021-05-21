@@ -12,10 +12,9 @@ include_directories(src)
 add_executable(code
         db/bpt.hpp
         db/hash_map.h
-        db/filemanager.hpp
         lib/bst.hpp
         lib/mytools.hpp
         lib/timetype.hpp
         src/cmdprocessor.hpp
         src/main.cpp
-        src/systemcore.hpp lib/vector.hpp)
+        src/systemcore.hpp)
