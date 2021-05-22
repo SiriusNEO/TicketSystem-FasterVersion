@@ -18,6 +18,9 @@
 #define COMPLETE(_x) printf(_x": %.6lf\n", (clock()-st)/(double)CLOCKS_PER_SEC);
 
 namespace Sirius {
+    constexpr int Int_Max = 0x7fffffff;
+    constexpr unsigned long long LL_Max = (1ll << 60) + 7;
+
     /* FixedStr */
     template<int SIZE>
     struct FixedStr { /* Warning: Don't use too long string to initialize it. */
@@ -155,6 +158,15 @@ namespace Sirius {
             else if (typ == 64) ret += '_';
         }
         return ret;
+    }
+
+    /* Hash */
+    constexpr int HashSeed = 131;
+    unsigned long long hash(const char* nowStr) {
+        unsigned long long ret = 0;
+        const char* p = nowStr;
+        while (*p) ret = ret * HashSeed + (*p++) - '0';
+        return ret % LL_Max;
     }
 
     /* Fastout */

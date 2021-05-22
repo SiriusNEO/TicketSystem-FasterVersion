@@ -975,7 +975,7 @@ int delete_num=0;
 
 
         explicit Bptree(const char *file_name1 = "data1", const char *file_name2 = "data2") {
-            the_manager=new Diskmanager(this,91,file_name1,file_name2);
+            the_manager=new Diskmanager(this,100,file_name1,file_name2);
         }
 
         ~Bptree() {
