@@ -15,7 +15,7 @@ namespace Sirius {
 
     class System {
 
-    private:
+    public:
     /*  User  */
     struct User {
         pwdType password;
@@ -77,6 +77,8 @@ namespace Sirius {
     };
     static bool timeCmp(const Ticket& obj1, const Ticket& obj2) {return (obj1.time == obj2.time) ? obj1.trainID < obj2.trainID : obj1.time < obj2.time;}
     static bool costCmp(const Ticket& obj1, const Ticket& obj2) {return (obj1.cost == obj2.cost) ? obj1.trainID < obj2.trainID : obj1.cost < obj2.cost;}
+    typedef std::pair<staNameType, int> stationPair;
+    static bool stationCmp(const stationPair& obj1, const stationPair& obj2) {return obj1.first < obj2.first;}
 
     /* Order */
     struct Order {
@@ -349,45 +351,75 @@ namespace Sirius {
                 for (auto ti = tList; ti != tList+tLen; ti++) {
                     if (ti->trainID == si->trainID) continue;
                     auto trainT = trainDatabase.find(ti->trainID);
-                    for (int k = si->index + 1; k < trainS.first.stationNum; ++k) //优化
-                        for (int l = 0; l < ti->index; ++l) {
-                            if (trainS.first.stations[k] == trainT.first.stations[l]) {
-                                TimeType fastestStartDay2;
-                                if (trainS.first.arrivingTimes[k].getClock() <= trainT.first.leavingTimes[l].getClock())
-                                    fastestStartDay2 = (startDay1 + trainS.first.arrivingTimes[k]).getDate() - trainT.first.leavingTimes[l].getDate();
-                                else
-                                    fastestStartDay2 = (startDay1 + trainS.first.arrivingTimes[k]).getDate() + 24*60 - trainT.first.leavingTimes[l].getDate();
-                                //第一辆车发车时间，第二辆车最快发车时间（保证第二辆车 上车时间为第一辆车到达当天）
-                                if (ti->endSaleDate < fastestStartDay2) continue; //最快还是赶不上第二辆车卖完，不行
-                                TimeType startDay2 = std::max(fastestStartDay2, ti->startSaleDate); //如果能最快发车就最快，否则从第二辆车第一次发车就上车
-                                bool updated = false;
-                                if (info.argNum == 4 && info.args['p' - 'a'] == "cost") {
-                                    if ((ans > trainS.first.priceSum[k] - si->priceSum + ti->priceSum - trainT.first.priceSum[l]) ||
-                                    (ans == trainS.first.priceSum[k] - si->priceSum + ti->priceSum - trainT.first.priceSum[l] && firstTime > trainS.first.arrivingTimes[k] - si->leavingTime)) {
-                                        ans = trainS.first.priceSum[k] - si->priceSum + ti->priceSum - trainT.first.priceSum[l];
-                                        firstTime = trainS.first.arrivingTimes[k] - si->leavingTime;
-                                        updated = true;
-                                    }
-                                }
-                                else if (ans > (startDay2 + ti->arrivingTime) - (startDay1 + si->leavingTime) ||
-                                (ans == (startDay2 + ti->arrivingTime) - (startDay1 + si->leavingTime) && firstTime > trainS.first.arrivingTimes[k] - si->leavingTime)) {
-                                    ans = (startDay2 + ti->arrivingTime) - (startDay1 + si->leavingTime);
+                    stationPair kList[StationNum_Max+2], lList[StationNum_Max+2];
+                    int kLen = 0, lLen = 0;
+                    for (int k = si->index + 1; k < trainS.first.stationNum; ++k) kList[kLen++] = std::make_pair(trainS.first.stations[k], k);
+                    for (int l = 0; l < ti->index; ++l) lList[lLen++] = std::make_pair(trainT.first.stations[l], l);
+                    if (!kLen || !lLen) continue;
+                    Sirius::qsort(kList, kList+kLen-1, stationCmp);
+                    Sirius::qsort(lList, lList+lLen-1, stationCmp);
+                    stationPair *ptr1 = kList, *ptr2 = lList;
+                    while (ptr1 != kList+kLen && ptr2 != lList+lLen) {
+                        if (ptr1->first < ptr2->first) ptr1++;
+                        else if (ptr1->first > ptr2->first) ptr2++;
+                        else {
+                            int k = ptr1->second, l = ptr2->second;
+                            ptr1++, ptr2++;
+                            TimeType fastestStartDay2;
+                            if (trainS.first.arrivingTimes[k].getClock() <=
+                                trainT.first.leavingTimes[l].getClock())
+                                fastestStartDay2 = (startDay1 + trainS.first.arrivingTimes[k]).getDate() -
+                                                   trainT.first.leavingTimes[l].getDate();
+                            else
+                                fastestStartDay2 =
+                                        (startDay1 + trainS.first.arrivingTimes[k]).getDate() + 24 * 60 -
+                                        trainT.first.leavingTimes[l].getDate();
+                            //第一辆车发车时间，第二辆车最快发车时间（保证第二辆车 上车时间为第一辆车到达当天）
+                            if (ti->endSaleDate < fastestStartDay2) continue; //最快还是赶不上第二辆车卖完，不行
+                            TimeType startDay2 = std::max(fastestStartDay2,
+                                                          ti->startSaleDate); //如果能最快发车就最快，否则从第二辆车第一次发车就上车
+                            bool updated = false;
+                            if (info.argNum == 4 && info.args['p' - 'a'] == "cost") {
+                                if ((ans > trainS.first.priceSum[k] - si->priceSum + ti->priceSum -
+                                           trainT.first.priceSum[l]) ||
+                                    (ans == trainS.first.priceSum[k] - si->priceSum + ti->priceSum -
+                                            trainT.first.priceSum[l] &&
+                                     firstTime > trainS.first.arrivingTimes[k] - si->leavingTime)) {
+                                    ans = trainS.first.priceSum[k] - si->priceSum + ti->priceSum -
+                                          trainT.first.priceSum[l];
                                     firstTime = trainS.first.arrivingTimes[k] - si->leavingTime;
                                     updated = true;
                                 }
-                                if (updated) {
-                                    ret.clear();
-                                    auto dayTrainS = dayTrainDatabase.find(std::make_pair(startDay1, trainS.first.trainID));
-                                    auto dayTrainT = dayTrainDatabase.find(std::make_pair(startDay2, trainT.first.trainID));
-                                    ret += std::string(si->trainID.str) + " " + std::string(trainS.first.stations[si->index].str) + " " + (startDay1 + si->leavingTime).toFormatString()
-                                           + " -> " + std::string(trainS.first.stations[k].str) + " " + (startDay1 + trainS.first.arrivingTimes[k]).toFormatString() + " " +
-                                           std::to_string(trainS.first.priceSum[k] - si->priceSum) + " " + std::to_string(dayTrainS.first.querySeat(si->index, k - 1)) + "\n";
-                                    ret += std::string(trainT.first.trainID.str) + " " + std::string(trainT.first.stations[l].str) + " " + (startDay2 + trainT.first.leavingTimes[l]).toFormatString()
-                                           + " -> " + std::string(trainT.first.stations[ti->index].str) + " " + (startDay2 + ti->arrivingTime).toFormatString() + " " +
-                                           std::to_string(ti->priceSum - trainT.first.priceSum[l]) + " " + std::to_string(dayTrainT.first.querySeat(l, ti->index - 1));
-                                }
+                            } else if (ans > (startDay2 + ti->arrivingTime) - (startDay1 + si->leavingTime) ||
+                                       (ans == (startDay2 + ti->arrivingTime) - (startDay1 + si->leavingTime) &&
+                                        firstTime > trainS.first.arrivingTimes[k] - si->leavingTime)) {
+                                ans = (startDay2 + ti->arrivingTime) - (startDay1 + si->leavingTime);
+                                firstTime = trainS.first.arrivingTimes[k] - si->leavingTime;
+                                updated = true;
+                            }
+                            if (updated) {
+                                ret.clear();
+                                auto dayTrainS = dayTrainDatabase.find(
+                                        std::make_pair(startDay1, trainS.first.trainID));
+                                auto dayTrainT = dayTrainDatabase.find(
+                                        std::make_pair(startDay2, trainT.first.trainID));
+                                ret += std::string(si->trainID.str) + " " +
+                                       std::string(trainS.first.stations[si->index].str) + " " +
+                                       (startDay1 + si->leavingTime).toFormatString()
+                                       + " -> " + std::string(trainS.first.stations[k].str) + " " +
+                                       (startDay1 + trainS.first.arrivingTimes[k]).toFormatString() + " " +
+                                       std::to_string(trainS.first.priceSum[k] - si->priceSum) + " " +
+                                       std::to_string(dayTrainS.first.querySeat(si->index, k - 1)) + "\n";
+                                ret += std::string(trainT.first.trainID.str) + " " +
+                                       std::string(trainT.first.stations[l].str) + " " +
+                                       (startDay2 + trainT.first.leavingTimes[l]).toFormatString()
+                                       + " -> " + std::string(trainT.first.stations[ti->index].str) + " " +
+                                       (startDay2 + ti->arrivingTime).toFormatString() + " " +
+                                       std::to_string(ti->priceSum - trainT.first.priceSum[l]) + " " +
+                                       std::to_string(dayTrainT.first.querySeat(l, ti->index - 1));
                             }
                         }
+                    }
                 }
             }
             if (ans != Int_Max) {

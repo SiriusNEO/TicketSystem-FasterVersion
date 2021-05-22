@@ -38,9 +38,8 @@ void TrainPressure() {
 }
 
 int main() {
-    //freopen("data/basic_6/10.in", "r", stdin);
+    //freopen("data/basic_6/6.in", "r", stdin);
     //freopen("data/basic_6/my.out", "w", stdout);
-
     std::string cmd;
     while (getline(std::cin, cmd) && ticketSystem.response(cmd)) cmd.clear();
 }
