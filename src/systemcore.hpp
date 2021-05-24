@@ -7,7 +7,6 @@
 
 #include "cmdprocessor.hpp"
 #include "../db/bpt.hpp"
-#include "../db/allcachedmanager.hpp"
 
 namespace Sirius {
     typedef unsigned long long hashCode;
