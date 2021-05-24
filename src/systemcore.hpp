@@ -16,96 +16,96 @@ namespace Sirius {
     class System {
 
     public:
-    /*  User  */
-    struct User {
-        pwdType password;
-        uNameType name;
-        addrType mailAddr;
-        int privilege;
-    };
-    Bptree<hashCode, User> userDatabase; //uid -> user
-    Sirius::BinarySearchTree<hashCode> loggedUser;
+        /*  User  */
+        struct User {
+            pwdType password;
+            uNameType name;
+            addrType mailAddr;
+            int privilege;
+        };
+        Bptree<hashCode, User> userDatabase; //uid -> user
+        Sirius::BinarySearchTree<hashCode> loggedUser;
 
-    /* Train
-     * 0 -> 1 -> 2 -> 3 -> ... -> n
-     * for route 1->2->3, the total price is: price[2]+price[3], that is: priceSum[3] - priceSum[1]
-     * the min seat is: min(seat[1], seat[2]), that is: querySeat(1, 3-1)
-     * the total time is: arriving[3] - leaving[1]
-    */
+        /* Train
+         * 0 -> 1 -> 2 -> 3 -> ... -> n
+         * for route 1->2->3, the total price is: price[2]+price[3], that is: priceSum[3] - priceSum[1]
+         * the min seat is: min(seat[1], seat[2]), that is: querySeat(1, 3-1)
+         * the total time is: arriving[3] - leaving[1]
+        */
 
-    struct Train {
-        tidType trainID;
-        int stationNum;
-        staNameType stations[StationNum_Max]; //0-based
-        int totalSeatNum, priceSum[StationNum_Max];
-                                                //price i-1->i, seat i->i+1
-                                                //price[0]: ? -> 0, === 0
-        TimeType startTime, arrivingTimes[StationNum_Max], leavingTimes[StationNum_Max], startSaleDate, endSaleDate;
-                                                //arrive / leave i, 0-based
-                                                //arrive[0] === 0, leaving[0] = startTime, leaving[final] === Int_Max，保证起点不做终点站，终点不做起点站
-        char type;
-        bool isReleased;
-    };
-    Bptree<hashCode, Train> trainDatabase; //tid -> train
+        struct Train {
+            tidType trainID;
+            int stationNum;
+            staNameType stations[StationNum_Max]; //0-based
+            int totalSeatNum, priceSum[StationNum_Max];
+            //price i-1->i, seat i->i+1
+            //price[0]: ? -> 0, === 0
+            TimeType startTime, arrivingTimes[StationNum_Max], leavingTimes[StationNum_Max], startSaleDate, endSaleDate;
+            //arrive / leave i, 0-based
+            //arrive[0] === 0, leaving[0] = startTime, leaving[final] === Int_Max，保证起点不做终点站，终点不做起点站
+            char type;
+            bool isReleased;
+        };
+        Bptree<hashCode, Train> trainDatabase; //tid -> train
 
-    struct DayTrain { //某一天发站的 trainID 火车上的座位情况. 优化：线段树
-        int seatNum[StationNum_Max];
-        int querySeat(int l, int r) {
-            int ret = Int_Max;
-            for (int i = l; i <= r; ++i) ret = std::min(ret, seatNum[i]);
-            return ret;
-        }
-        void modifySeat(int l, int r, int val) {
-            for (int i = l; i <= r; ++i) seatNum[i] += val;
-        }
-    };
-    Bptree<std::pair<TimeType, hashCode>, DayTrain> dayTrainDatabase; //(startDay, tid) -> dayTrain
+        struct DayTrain { //某一天发站的 trainID 火车上的座位情况. 优化：线段树
+            int seatNum[StationNum_Max];
+            int querySeat(int l, int r) {
+                int ret = Int_Max;
+                for (int i = l; i <= r; ++i) ret = std::min(ret, seatNum[i]);
+                return ret;
+            }
+            void modifySeat(int l, int r, int val) {
+                for (int i = l; i <= r; ++i) seatNum[i] += val;
+            }
+        };
+        Bptree<std::pair<TimeType, hashCode>, DayTrain> dayTrainDatabase; //(startDay, tid) -> dayTrain
 
-    struct Station { //属于某个车次的站
-        tidType trainID;
-        hashCode tidHash;
-        int index{}, priceSum{}; //方便查座位用
-        TimeType startSaleDate, endSaleDate, arrivingTime, leavingTime; //精简版信息，不用去查 trainDatabase
-        Station() = default;
-    };
-    Bptree<std::pair<hashCode, hashCode>, Station> stationDatabase; //(staName, tid) -> 特定车次的 station
+        struct Station { //属于某个车次的站
+            tidType trainID;
+            hashCode tidHash;
+            int index{}, priceSum{}; //方便查座位用
+            TimeType startSaleDate, endSaleDate, arrivingTime, leavingTime; //精简版信息，不用去查 trainDatabase
+            Station() = default;
+        };
+        Bptree<std::pair<hashCode, hashCode>, Station> stationDatabase; //(staName, tid) -> 特定车次的 station
 
-    struct Ticket {
-        tidType trainID;
-        int s, t, time, cost;
-        Ticket():trainID(), s(0), t(0), time(Int_Max), cost(Int_Max){}
-        Ticket(tidType _trainID, int _s, int _t, int _time, int _cost):trainID(_trainID), s(_s), t(_t), time(_time), cost(_cost){}
-    };
-    static bool timeCmp(const Ticket& obj1, const Ticket& obj2) {return (obj1.time == obj2.time) ? obj1.trainID < obj2.trainID : obj1.time < obj2.time;}
-    static bool costCmp(const Ticket& obj1, const Ticket& obj2) {return (obj1.cost == obj2.cost) ? obj1.trainID < obj2.trainID : obj1.cost < obj2.cost;}
-    typedef std::pair<staNameType, int> stationPair;
-    static bool stationCmp(const stationPair& obj1, const stationPair& obj2) {return obj1.first < obj2.first;}
+        struct Ticket {
+            tidType trainID;
+            int s, t, time, cost;
+            Ticket():trainID(), s(0), t(0), time(Int_Max), cost(Int_Max){}
+            Ticket(tidType _trainID, int _s, int _t, int _time, int _cost):trainID(_trainID), s(_s), t(_t), time(_time), cost(_cost){}
+        };
+        static bool timeCmp(const Ticket& obj1, const Ticket& obj2) {return (obj1.time == obj2.time) ? obj1.trainID < obj2.trainID : obj1.time < obj2.time;}
+        static bool costCmp(const Ticket& obj1, const Ticket& obj2) {return (obj1.cost == obj2.cost) ? obj1.trainID < obj2.trainID : obj1.cost < obj2.cost;}
+        typedef std::pair<staNameType, int> stationPair;
+        static bool stationCmp(const stationPair& obj1, const stationPair& obj2) {return obj1.first < obj2.first;}
 
-    /* Order */
-    struct Order {
-        tidType trainID;
-        uidType userID;
-        int fromIndex, toIndex;
-        staNameType from, to;
-        TimeType startDay, leavingTime, arrivingTime;
-        int orderID, price, num;
-        orderStatusType status;
-    };
-    Bptree<std::pair<hashCode, int>, Order> orderDatabase; // (uid, oid) -> order
-    Bptree<std::pair<std::pair<TimeType, hashCode>, int>, Order > orderQueue;// (startDay, tid, oid) -> order
+        /* Order */
+        struct Order {
+            tidType trainID;
+            uidType userID;
+            int fromIndex, toIndex;
+            staNameType from, to;
+            TimeType startDay, leavingTime, arrivingTime;
+            int orderID, price, num;
+            orderStatusType status;
+        };
+        Bptree<std::pair<hashCode, int>, Order> orderDatabase; // (uid, oid) -> order
+        Bptree<std::pair<std::pair<TimeType, hashCode>, int>, Order > orderQueue;// (startDay, tid, oid) -> order
 
-    int (System::*Interfaces[CmdTypeNum_Max])(const cmdType&) = {&System::add_user, &System::login, &System::logout, &System::query_profile, &System::modify_profile,
-                                                                 &System::add_train, &System::release_train, &System::query_train, &System::delete_train, &System::query_ticket,
-                                                                 &System::query_transfer, &System::buy_ticket, &System::query_order, &System::refund_ticket, &System::clean,
-                                                                 &System::exit
-                                                                 };
-    Station sList[Pool_Max], tList[Pool_Max];
-    Ticket tickets[Pool_Max];
-    Order orders[Pool_Max], refundOrders[Pool_Max];
+        int (System::*Interfaces[CmdTypeNum_Max])(const cmdType&) = {&System::add_user, &System::login, &System::logout, &System::query_profile, &System::modify_profile,
+                                                                     &System::add_train, &System::release_train, &System::query_train, &System::delete_train, &System::query_ticket,
+                                                                     &System::query_transfer, &System::buy_ticket, &System::query_order, &System::refund_ticket, &System::clean,
+                                                                     &System::exit
+        };
+        Station sList[Pool_Max], tList[Pool_Max];
+        Ticket tickets[Pool_Max];
+        Order orders[Pool_Max], refundOrders[Pool_Max];
 
     public:
         System():userDatabase("user.bin", "user1.bin"), loggedUser(),trainDatabase("train.bin", "train1.bin"), dayTrainDatabase("daytrain.bin", "daytrain1.bin"),
-        stationDatabase("station.bin", "station1.bin"), orderDatabase("order.bin", "order1.bin"), orderQueue("queue.bin", "queue1.bin"){}
+                 stationDatabase("station.bin", "station1.bin"), orderDatabase("order.bin", "order1.bin"), orderQueue("queue.bin", "queue1.bin"){}
 
         bool response(const std::string &cmdStr) { // false::quit
             auto info = parse(cmdStr);
@@ -238,8 +238,8 @@ namespace Sirius {
                 dayTrainDatabase.insert(std::make_pair(i, idHash), dayTrain);
             }
             for (int i = 0; i < targetTrain.first.stationNum; ++i) {
-                 stationDatabase.insert(std::make_pair(hash(targetTrain.first.stations[i].str), idHash),
-                 (Station){id, idHash, i, targetTrain.first.priceSum[i], targetTrain.first.startSaleDate, targetTrain.first.endSaleDate, targetTrain.first.arrivingTimes[i], targetTrain.first.leavingTimes[i]});
+                stationDatabase.insert(std::make_pair(hash(targetTrain.first.stations[i].str), idHash),
+                                       (Station){id, idHash, i, targetTrain.first.priceSum[i], targetTrain.first.startSaleDate, targetTrain.first.endSaleDate, targetTrain.first.arrivingTimes[i], targetTrain.first.leavingTimes[i]});
             }
             targetTrain.first.isReleased = true;
             trainDatabase.modify(idHash, targetTrain.first);
@@ -273,12 +273,12 @@ namespace Sirius {
                     putchar(' '), putchar('x');
                 }
                 else {
-                   write((day+targetTrain.first.arrivingTimes[i]).toFormatString().c_str());
-                   write(" -> ");
-                   write((day+targetTrain.first.leavingTimes[i]).toFormatString().c_str());putchar(' ');
-                   writeInt(targetTrain.first.priceSum[i]);putchar(' ');
-                   if (!targetTrain.first.isReleased) writeInt(targetTrain.first.totalSeatNum), putchar('\n');
-                   else writeInt(dayTrain.first.seatNum[i]), putchar('\n');
+                    write((day+targetTrain.first.arrivingTimes[i]).toFormatString().c_str());
+                    write(" -> ");
+                    write((day+targetTrain.first.leavingTimes[i]).toFormatString().c_str());putchar(' ');
+                    writeInt(targetTrain.first.priceSum[i]);putchar(' ');
+                    if (!targetTrain.first.isReleased) writeInt(targetTrain.first.totalSeatNum), putchar('\n');
+                    else writeInt(dayTrain.first.seatNum[i]), putchar('\n');
                 }
             }
             return 1;
@@ -327,7 +327,7 @@ namespace Sirius {
                 TimeType startDay = day - train.first.leavingTimes[tickets[i].s].getDate();
                 auto dayTrain = dayTrainDatabase.find(std::make_pair(startDay, idHash));
                 std::string lea = (startDay + train.first.leavingTimes[tickets[i].s]).toFormatString(),
-                            arr = (startDay + train.first.arrivingTimes[tickets[i].t]).toFormatString();
+                        arr = (startDay + train.first.arrivingTimes[tickets[i].t]).toFormatString();
                 putchar('\n');
                 write(tickets[i].trainID.str);putchar(' ');
                 write(train.first.stations[tickets[i].s].str);putchar(' ');

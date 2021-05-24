@@ -131,7 +131,7 @@ int delete_num=0;
                     mid->front_node->next_node = tail_node;
                     tail_node->front_node = mid->front_node;
                     themanager->the_map->erase(mid->node_offset);
-                    data_num--;///!!!!!!!!!!!!!!!!!!!!!!!!!!!可能错了//todo
+                    //data_num--;///!!!!!!!!!!!!!!!!!!!!!!!!!!!可能错了//todo
                     delete mid;//这时顺便把data给delete掉了,所以，记得不要double delete
                 }
 

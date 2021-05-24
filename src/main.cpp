@@ -51,8 +51,8 @@ void QueryTicketPressure() {
 }
 
 int main() {
-    //freopen("data/basic_2/1.in", "r", stdin);
-    //freopen("data/basic_2/my.out", "w", stdout);
+    //freopen("data/basic_4/5.in", "r", stdin);
+    //freopen("data/basic_4/my.out", "w", stdout);
 
     std::string cmd;
     while (getline(std::cin, cmd) && ticketSystem.response(cmd)) cmd.clear();
