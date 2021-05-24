@@ -8,6 +8,7 @@
 #include "../lib/mytools.hpp"
 #include "../lib/timetype.hpp"
 #include "../lib/bst.hpp"
+#include <algorithm>
 
 namespace Sirius {
     constexpr int Argc_Max = 24, CmdTypeNum_Max = 16;

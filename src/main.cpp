@@ -4,6 +4,8 @@
 #include <vector>
 
 Sirius::System ticketSystem;
+std::string cmd;
+char buffer[7005];
 
 void UserPressure() {
     std::vector<std::string> cache;
@@ -37,7 +39,6 @@ void TrainPressure() {
     }
 }
 
-
 void QueryTicketPressure() {
     std::vector<std::string> cache;
     for (int i = 1; i <= 100000; ++i) {
@@ -51,9 +52,9 @@ void QueryTicketPressure() {
 }
 
 int main() {
-    //freopen("data/basic_4/5.in", "r", stdin);
-    //freopen("data/basic_4/my.out", "w", stdout);
-
-    std::string cmd;
-    while (getline(std::cin, cmd) && ticketSystem.response(cmd)) cmd.clear();
+    while (true) {
+        memset(buffer, 0, sizeof(buffer));
+        fgets(buffer, 7000, stdin);
+        if (!ticketSystem.response(buffer)) return 0;
+    }
 }

@@ -7,6 +7,7 @@
 
 #include "cmdprocessor.hpp"
 #include "../db/bpt.hpp"
+#include "../db/allcachedmanager.hpp"
 
 namespace Sirius {
     typedef unsigned long long hashCode;
@@ -309,9 +310,10 @@ namespace Sirius {
             while (si != sList+sLen && ti != tList+tLen) {
                 if (si->tidHash < ti->tidHash) si++;
                 else if (si->tidHash > ti->tidHash) ti++;
+                else if (si->index >= ti->index) si++, ti++;
                 else {
                     TimeType startDay = day - si->leavingTime.getDate(); //要在day这一天上车，对应的发站时间
-                    if (si->startSaleDate <= startDay && startDay <= si->endSaleDate && si->leavingTime < ti->arrivingTime && si->index < ti->index)
+                    if (si->startSaleDate <= startDay && startDay <= si->endSaleDate)
                         //售卖时间范围内每天都有车.同一辆车，arr和lea可以直接比. 比两个更鲁棒
                         tickets[ticketCnt++] = Ticket(si->trainID, si->index,ti->index, ti->arrivingTime-si->leavingTime, ti->priceSum-si->priceSum);
                     si++, ti++;
@@ -364,8 +366,8 @@ namespace Sirius {
                     for (int k = si->index + 1; k < trainS.first.stationNum; ++k) kList[kLen++] = std::make_pair(trainS.first.stations[k], k);
                     for (int l = 0; l < ti->index; ++l) lList[lLen++] = std::make_pair(trainT.first.stations[l], l);
                     if (!kLen || !lLen) continue;
-                    Sirius::qsort(kList, kList+kLen-1, stationCmp);
-                    Sirius::qsort(lList, lList+lLen-1, stationCmp);
+                    qsort(kList, kList+kLen-1, stationCmp);
+                    qsort(lList, lList+lLen-1, stationCmp);
                     stationPair *ptr1 = kList, *ptr2 = lList;
                     while (ptr1 != kList+kLen && ptr2 != lList+lLen) {
                         if (ptr1->first < ptr2->first) ptr1++;

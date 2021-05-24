@@ -29,14 +29,14 @@ namespace Sirius {
             void insert(const keyType& key, const valueType& val) {
                 bptree.insert(key, val);
             }
-            valueType find(const keyType& key) {
+            std::pair<valueType, bool> find(const keyType& key) {
                 int loc = table.find(key);
-                if (loc != -1) return memoryPool[loc]->second;
+                if (loc != -1) return std::make_pair(memoryPool[loc]->second, true);
                 const auto& ret = bptree.find(key);
                 memoryPool[size] = new dataType (std::pair<keyType, valueType>(key, ret.first));
                 table.insert(key, size);
                 size++;
-                return ret.first;
+                return ret;
             }
             bool modify(const keyType& key, const valueType& val) {
                 int loc = table.find(key);
