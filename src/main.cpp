@@ -5,10 +5,6 @@
 Sirius::System ticketSystem;
 char buffer[7005];
 
-struct A {
-    int a, b;
-};
-
 int main() {
     while (true) {
         memset(buffer, 0, sizeof(buffer));
