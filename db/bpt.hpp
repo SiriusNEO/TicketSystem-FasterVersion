@@ -337,6 +337,13 @@ int delete_num=0;
                 fwrite(&(value_), the_tree->value_size, 1, f_value);
             }
 
+            //by Sirius
+            template<class T>
+            void write_info(const T& info_, int offset_) {
+                fseek(f_value, offset_, SEEK_SET);
+                fwrite(&(info_), sizeof(T), 1, f_value);
+            }
+
             //用引用传递而不是return应该可以提高效率
             void read_value(int off_, value_type &value_) {
                 fseek(f_value, off_, SEEK_SET);
@@ -1042,6 +1049,14 @@ int delete_num=0;
                 return true;
             }
             return false;
+        }
+
+        template<class T>
+        bool modify_info(const Key &key, const T& info, size_t offset) {
+            node_index p = search_node(key);
+            if (p.first == nullptr) return false;
+            the_manager->write_info(info, p.first->little_node[p.second].second+offset);
+            return true;
         }
 
         std::pair<Value, bool> find(const Key &key)

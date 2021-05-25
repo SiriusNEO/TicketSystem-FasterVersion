@@ -9,8 +9,6 @@
 #include "../db/bpt.hpp"
 
 namespace Sirius {
-    constexpr int HashSeed = 131;
-
     enum orderStatusType {SUCCESS, PENDING, REFUNDED};
 
     class System {
