@@ -9,8 +9,6 @@
 #include "../db/bpt.hpp"
 
 namespace Sirius {
-    typedef unsigned long long hashCode;
-
     enum orderStatusType {SUCCESS, PENDING, REFUNDED};
 
     class System {

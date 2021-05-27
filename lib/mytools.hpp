@@ -21,6 +21,8 @@ namespace Sirius {
     constexpr int Int_Max = 0x7fffffff;
     constexpr unsigned long long LL_Max = (1ll << 60) + 7;
 
+    typedef unsigned long long hashCode;
+
     /* FixedStr */
     template<int SIZE>
     struct FixedStr { /* Warning: Don't use too long string to initialize it. */
@@ -162,7 +164,7 @@ namespace Sirius {
 
     /* Hash */
     constexpr int HashSeed = 131;
-    unsigned long long hash(const char* nowStr) {
+    hashCode hash(const char* nowStr) {
         unsigned long long ret = 0;
         const char* p = nowStr;
         while (*p) ret = ret * HashSeed + (*p++) - '0';

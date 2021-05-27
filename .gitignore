@@ -1,7 +1,10 @@
 # Project exclude paths
 data/
-run.py/
-localJudge.py/
+run.py
+localJudge.py
+localJudgeJusttime.py
+cmake_install.cmake
+clean.sh
 cmake-build-debug/
 .idea/
 BigIntegerTest/

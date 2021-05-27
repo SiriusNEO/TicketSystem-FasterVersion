@@ -17,4 +17,4 @@ add_executable(code
         lib/timetype.hpp
         src/cmdprocessor.hpp
         src/main.cpp
-        src/systemcore.hpp db/allcachedmanager.hpp)
+        src/systemcore.hpp)
