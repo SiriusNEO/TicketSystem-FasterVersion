@@ -3,7 +3,7 @@ project(code)
 
 set(CMAKE_CXX_STANDARD 14)
 
-add_definitions(-O2)
+add_definitions(-O3)
 
 include_directories(db)
 include_directories(lib)
